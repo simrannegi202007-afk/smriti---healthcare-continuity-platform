@@ -223,6 +223,20 @@ export default function RecordCard({
             </div>
 
             <div className="flex items-center space-x-2">
+              {record.category === 'Lab report' && onExplain && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExplain(record);
+                  }}
+                  className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold flex items-center space-x-1.5 shadow-sm transition tap-target"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-teal-200" />
+                  <span>{t('timeline.explainReport')}</span>
+                </button>
+              )}
+
               {record.file_name && (
                 <button
                   type="button"

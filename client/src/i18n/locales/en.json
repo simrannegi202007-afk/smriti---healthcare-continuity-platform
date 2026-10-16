@@ -118,7 +118,7 @@
     "high": "High",
     "confirmAndExplain": "Verify & Generate Plain-Language Explanation",
     "explanationTitle": "Plain-Language Summary ({{lang}})",
-    "disclaimer": "⚠️ Mandatory Medical Notice: This explains your report in simple words. It is not a clinical diagnosis or treatment advice. Always consult your qualified doctor before taking medical decisions.",
+    "disclaimer": "This explains your report in simple words. It is not a diagnosis. Please consult your doctor.",
     "audioPlay": "Listen in {{lang}}",
     "audioStop": "Stop Voice"
   },
