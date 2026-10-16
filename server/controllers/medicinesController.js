@@ -13,15 +13,15 @@ function getMedicines(req, res) {
 function addMedicine(req, res) {
   try {
     const userId = req.user.id;
-    const { name, dose, frequency, timing, start_date, notes } = req.body;
+    const { name, dose, frequency, timing, start_date, duration, notes } = req.body;
 
     if (!name || !dose) {
       return res.status(400).json({ error: 'Medicine name and dose are required' });
     }
 
     const insert = db.prepare(`
-      INSERT INTO medicines (user_id, name, dose, frequency, timing, start_date, is_active, notes)
-      VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+      INSERT INTO medicines (user_id, name, dose, frequency, timing, start_date, duration, is_active, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
     `);
 
     const result = insert.run(
@@ -31,6 +31,7 @@ function addMedicine(req, res) {
       frequency || 'Once daily',
       timing || 'After meals',
       start_date || new Date().toISOString().split('T')[0],
+      duration || 'Ongoing',
       notes || ''
     );
 

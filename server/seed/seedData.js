@@ -1,8 +1,14 @@
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
+const generateAllSampleFiles = require('./generateSampleFiles');
+const { calculateFileHash } = require('../middleware/uploadMiddleware');
+const path = require('path');
 
 function seedDatabase() {
   console.log('Seeding Smriti database with PRD demo patient (Mrs. Sunita Sharma)...');
+
+  // Generate real sample PDF and JPG records on disk
+  generateAllSampleFiles();
 
   // Clear existing demo tables
   db.exec(`
@@ -179,7 +185,7 @@ function seedDatabase() {
       r.doctor,
       r.category,
       r.fileName,
-      `/uploads/${r.fileName}`,
+      `/api/records/${r.id}/file`,
       r.fileHash,
       r.aiSummary,
       r.isKeyMoment,
@@ -219,13 +225,13 @@ function seedDatabase() {
 
   // 5. Insert Medicines (3 current active)
   const insertMed = db.prepare(`
-    INSERT INTO medicines (user_id, name, dose, frequency, timing, start_date, end_date, is_active, source_record_id, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO medicines (user_id, name, dose, frequency, timing, start_date, duration, end_date, is_active, source_record_id, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertMed.run(userId, 'Metformin Hydrochloride', '500 mg', 'Twice daily (1-0-1)', 'After meals (सकाळी आणि रात्री जेवणानंतर)', '2024-01-14', null, 1, 9, 'For diabetes glycemic control');
-  insertMed.run(userId, 'Telmisartan', '40 mg', 'Once daily (1-0-0)', 'Morning before breakfast (सकाळी नाश्त्यापूर्वी)', '2024-05-18', null, 1, 9, 'For blood pressure management');
-  insertMed.run(userId, 'Calcium Carbonate + Vitamin D3', '500 mg + 250 IU', 'Once daily (0-1-0)', 'After lunch (दुपारी जेवणानंतर)', '2024-09-22', null, 1, 9, 'For knee osteoarthritis bone density');
+  insertMed.run(userId, 'Metformin Hydrochloride', '500 mg', 'Twice daily (1-0-1)', 'After meals (सकाळी आणि रात्री जेवणानंतर)', '2024-01-14', 'Ongoing / Long-term', null, 1, 9, 'For diabetes glycemic control');
+  insertMed.run(userId, 'Telmisartan', '40 mg', 'Once daily (1-0-0)', 'Morning before breakfast (सकाळी नाश्त्यापूर्वी)', '2024-05-18', 'Ongoing / Long-term', null, 1, 9, 'For blood pressure management');
+  insertMed.run(userId, 'Calcium Carbonate + Vitamin D3', '500 mg + 250 IU', 'Once daily (0-1-0)', 'After lunch (दुपारी जेवणानंतर)', '2024-09-22', '90 days', null, 1, 9, 'For knee osteoarthritis bone density');
 
   // 6. Insert Reminders
   const insertReminder = db.prepare(`

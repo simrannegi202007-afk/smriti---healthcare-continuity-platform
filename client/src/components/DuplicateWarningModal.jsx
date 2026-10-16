@@ -18,7 +18,9 @@ export default function DuplicateWarningModal({ duplicateInfo, onProceed, onCanc
         </h3>
 
         <p className="text-xs text-center text-slate-600 mb-4 leading-relaxed">
-          {t('upload.duplicateAlertMsg')}
+          {duplicateInfo?.matchType === 'hash'
+            ? '⚠️ Identical File Match (SHA-256 Hash): An identical document file already exists in your timeline.'
+            : (t('upload.duplicateAlertMsg') || 'A record with this date, hospital, and category already exists in your timeline.')}
         </p>
 
         {duplicateInfo?.existingRecord && (

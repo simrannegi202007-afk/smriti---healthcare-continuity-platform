@@ -17,7 +17,9 @@ import {
   Calendar,
   Building2,
   User,
-  Star
+  Star,
+  Eye,
+  Trash2
 } from 'lucide-react';
 
 const categoryMeta = {
@@ -47,6 +49,8 @@ export default function RecordCard({
   record, 
   onExplain, 
   onShare,
+  onPreviewFile,
+  onDelete,
   isSimple = false
 }) {
   const { t } = useTranslation();
@@ -141,14 +145,30 @@ export default function RecordCard({
           {/* AI Explain button if lab report */}
           {record.category === 'Lab report' && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onExplain(record);
               }}
-              className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition"
+              className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition tap-target"
             >
               <Sparkles className="w-3.5 h-3.5 text-teal-600" />
               <span>{t('timeline.explainReport')}</span>
+            </button>
+          )}
+
+          {/* Delete button */}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(record);
+              }}
+              title="Delete this record"
+              className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition tap-target"
+            >
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
 
@@ -203,16 +223,45 @@ export default function RecordCard({
             </div>
 
             <div className="flex items-center space-x-2">
+              {record.file_name && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onPreviewFile) onPreviewFile(record);
+                  }}
+                  className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-xl font-bold flex items-center space-x-1.5 shadow-sm transition tap-target"
+                >
+                  <Eye className="w-3.5 h-3.5 text-teal-700" />
+                  <span>{t('timeline.viewOriginalFile')}</span>
+                </button>
+              )}
+
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onShare(record);
                 }}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold flex items-center space-x-1"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold flex items-center space-x-1 shadow-sm transition tap-target"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>{t('timeline.shareThis')}</span>
               </button>
+
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(record);
+                  }}
+                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl font-bold flex items-center space-x-1 shadow-sm transition tap-target"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+              )}
             </div>
           </div>
 

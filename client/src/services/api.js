@@ -51,8 +51,26 @@ export const api = {
     return request(`/records?${query}`);
   },
   getRecordById: (id) => request(`/records/${id}`),
+  getProtectedFileBlobUrl: async (recordId, shareToken = null) => {
+    const token = localStorage.getItem('smriti_token');
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const url = shareToken ? `/api/records/${recordId}/file?token=${shareToken}` : `/api/records/${recordId}/file`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      let msg = `Protected file error: ${response.status}`;
+      try {
+        const errJson = await response.json();
+        if (errJson.error) msg = errJson.error;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  },
   checkDuplicate: (data) => request('/records/check-duplicate', { method: 'POST', body: JSON.stringify(data) }),
   uploadRecord: (formData) => request('/records/upload', { method: 'POST', body: formData }),
+  deleteRecord: (id) => request(`/records/${id}`, { method: 'DELETE' }),
   getTrends: (testName) => request(`/records/trends?testName=${encodeURIComponent(testName || 'HbA1c')}`),
 
   // AI Simplifier & Voice

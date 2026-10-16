@@ -12,19 +12,31 @@ import {
   User, 
   Loader2, 
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Pill,
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function UploadPage({ onUploadSuccess }) {
   const { t } = useTranslation();
   
   const [file, setFile] = useState(null);
+  const [fileHash, setFileHash] = useState(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [hospital, setHospital] = useState('Lilavati Hospital & Research Centre, Bandra');
   const [doctor, setDoctor] = useState('Dr. Neha Deshmukh');
   const [category, setCategory] = useState('Lab report');
   const [notes, setNotes] = useState('');
   const [isKeyMoment, setIsKeyMoment] = useState(false);
+
+  // Prescription Medicine Fields (PRD 7.5)
+  const [addPrescriptionMed, setAddPrescriptionMed] = useState(true);
+  const [medName, setMedName] = useState('');
+  const [medDose, setMedDose] = useState('');
+  const [medFrequency, setMedFrequency] = useState('Twice daily (1-0-1)');
+  const [medDuration, setMedDuration] = useState('30 days');
+  const [medTiming, setMedTiming] = useState('After meals');
 
   const [loading, setLoading] = useState(false);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -49,16 +61,35 @@ export default function UploadPage({ onUploadSuccess }) {
     { id: 'Other', label: t('upload.categories.other') }
   ];
 
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+  const computeFileHash = async (fileObj) => {
+    if (!fileObj) return null;
+    try {
+      const buffer = await fileObj.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      console.warn('Could not compute client file hash:', e);
+      return null;
     }
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileDrop = async (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const selected = e.dataTransfer.files[0];
+      setFile(selected);
+      const hash = await computeFileHash(selected);
+      setFileHash(hash);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selected = e.target.files[0];
+      setFile(selected);
+      const hash = await computeFileHash(selected);
+      setFileHash(hash);
     }
   };
 
@@ -79,6 +110,10 @@ export default function UploadPage({ onUploadSuccess }) {
       setDoctor('Dr. Arvind Patil');
       setCategory('Prescription');
       setNotes('New consultation prescription for routine maintenance');
+      setMedName('Glimepiride');
+      setMedDose('1 mg');
+      setMedFrequency('Once daily (1-0-0)');
+      setMedDuration('60 days');
     }
   };
 
@@ -87,10 +122,17 @@ export default function UploadPage({ onUploadSuccess }) {
     try {
       // 1. Perform duplicate check if not allowed yet
       if (!allowDuplicate) {
+        let currentHash = fileHash;
+        if (!currentHash && file) {
+          currentHash = await computeFileHash(file);
+          setFileHash(currentHash);
+        }
+
         const dupCheck = await api.checkDuplicate({
           date,
           hospital,
-          category
+          category,
+          fileHash: currentHash
         });
 
         if (dupCheck.isDuplicate) {
@@ -114,13 +156,22 @@ export default function UploadPage({ onUploadSuccess }) {
       formData.append('is_key_moment', isKeyMoment);
       formData.append('allow_duplicate', allowDuplicate);
 
+      // If prescription with medicine details entered (PRD 7.5)
+      if (category === 'Prescription' && addPrescriptionMed && medName.trim()) {
+        formData.append('medicine_name', medName.trim());
+        formData.append('medicine_dose', medDose.trim() || 'Standard dose');
+        formData.append('medicine_frequency', medFrequency);
+        formData.append('medicine_duration', medDuration);
+        formData.append('medicine_timing', medTiming);
+      }
+
       const res = await api.uploadRecord(formData);
       setSuccessMessage(true);
       setDuplicateModalOpen(false);
 
       setTimeout(() => {
         if (onUploadSuccess) onUploadSuccess(res.record);
-      }, 1200);
+      }, 1000);
     } catch (err) {
       if (err.status === 409 && err.data?.isDuplicate) {
         setDuplicateInfo(err.data);
@@ -142,7 +193,7 @@ export default function UploadPage({ onUploadSuccess }) {
           {t('upload.title')}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 font-medium">
-          {t('app.tagline')} • AI duplicate check and timeline categorization
+          {t('app.tagline')} • AI duplicate check, confidential storage & timeline integration
         </p>
       </div>
 
@@ -153,7 +204,7 @@ export default function UploadPage({ onUploadSuccess }) {
           <button
             type="button"
             onClick={() => handleQuickFillSample('duplicate')}
-            className="px-3 py-1.5 bg-amber-200 text-amber-950 font-bold rounded-xl hover:bg-amber-300 transition"
+            className="px-3 py-1.5 bg-amber-200 text-amber-950 font-bold rounded-xl hover:bg-amber-300 transition tap-target"
             title="Pre-fills existing record to trigger PRD duplicate warning demonstration"
           >
             ⚠️ Duplicate Test Record
@@ -161,9 +212,9 @@ export default function UploadPage({ onUploadSuccess }) {
           <button
             type="button"
             onClick={() => handleQuickFillSample('new')}
-            className="px-3 py-1.5 bg-teal-200 text-teal-950 font-bold rounded-xl hover:bg-teal-300 transition"
+            className="px-3 py-1.5 bg-teal-200 text-teal-950 font-bold rounded-xl hover:bg-teal-300 transition tap-target"
           >
-            ✨ New Clean Record
+            ✨ New Prescription Record
           </button>
         </div>
       </div>
@@ -189,17 +240,22 @@ export default function UploadPage({ onUploadSuccess }) {
           {file ? (
             <div>
               <p className="text-sm font-bold text-teal-900">{file.name}</p>
-              <p className="text-xs text-teal-600">{(file.size / 1024).toFixed(1)} KB • Ready to save</p>
+              <p className="text-xs text-teal-600">{(file.size / 1024).toFixed(1)} KB • Ready to save securely</p>
+              {fileHash && (
+                <p className="text-[10px] text-slate-400 font-mono mt-1">
+                  SHA-256: {fileHash.slice(0, 16)}...
+                </p>
+              )}
             </div>
           ) : (
             <div>
               <p className="text-sm font-bold text-slate-800">{t('upload.dragDrop')}</p>
-              <p className="text-xs text-slate-500 mt-1">Supports PDF, JPG, PNG from mobile or scan</p>
+              <p className="text-xs text-slate-500 mt-1">Supports PDF, JPG, PNG from mobile or scanner (Max 25MB)</p>
             </div>
           )}
         </div>
 
-        {/* Metadata Inputs */}
+        {/* Metadata Inputs (PRD 7.3) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           
           {/* Date */}
@@ -251,6 +307,86 @@ export default function UploadPage({ onUploadSuccess }) {
             />
           </div>
 
+          {/* PRD 7.5: Prescription & Medicine Derivation Section */}
+          {category === 'Prescription' && (
+            <div className="sm:col-span-2 bg-blue-50/70 border border-blue-200 rounded-2xl p-4 space-y-3 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-blue-950 text-xs flex items-center space-x-1.5">
+                  <Pill className="w-4 h-4 text-blue-700" />
+                  <span>{t('upload.medicineDetails') || 'Prescription Medicine Details'}</span>
+                </span>
+                <label className="flex items-center space-x-1 text-[11px] font-semibold text-blue-800 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addPrescriptionMed}
+                    onChange={(e) => setAddPrescriptionMed(e.target.checked)}
+                    className="rounded text-blue-600"
+                  />
+                  <span>{t('upload.addToActiveMeds') || 'Add to active medicines list'}</span>
+                </label>
+              </div>
+
+              {addPrescriptionMed && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                      {t('upload.medName') || 'Medicine Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={medName}
+                      onChange={(e) => setMedName(e.target.value)}
+                      placeholder="उदा. Metformin 500mg किंवा Glimepiride"
+                      className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                      {t('upload.medDose') || 'Dose'}
+                    </label>
+                    <input
+                      type="text"
+                      value={medDose}
+                      onChange={(e) => setMedDose(e.target.value)}
+                      placeholder="उदा. 500 mg / 1 गोळी"
+                      className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                      {t('upload.medFreq') || 'Frequency'}
+                    </label>
+                    <select
+                      value={medFrequency}
+                      onChange={(e) => setMedFrequency(e.target.value)}
+                      className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                    >
+                      <option value="Once daily (1-0-0)">Once daily (1-0-0)</option>
+                      <option value="Twice daily (1-0-1)">Twice daily (1-0-1)</option>
+                      <option value="Thrice daily (1-1-1)">Thrice daily (1-1-1)</option>
+                      <option value="As needed (SOS)">As needed (SOS)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                      {t('upload.medDuration') || 'Duration'}
+                    </label>
+                    <input
+                      type="text"
+                      value={medDuration}
+                      onChange={(e) => setMedDuration(e.target.value)}
+                      placeholder="उदा. 30 days, 90 days, किंवा Ongoing"
+                      className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Notes */}
           <div className="sm:col-span-2">
             <label className="block font-bold text-slate-700 mb-1">{t('upload.notes')}</label>
@@ -263,7 +399,7 @@ export default function UploadPage({ onUploadSuccess }) {
             ></textarea>
           </div>
 
-          {/* Key Moment Toggle */}
+          {/* Key Moment Toggle (PRD 7.4) */}
           <div className="sm:col-span-2 flex items-center space-x-2 p-3 bg-amber-50/60 border border-amber-200 rounded-2xl">
             <input
               type="checkbox"
@@ -277,6 +413,12 @@ export default function UploadPage({ onUploadSuccess }) {
             </label>
           </div>
 
+        </div>
+
+        {/* Security notice */}
+        <div className="flex items-center space-x-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <ShieldCheck className="w-4 h-4 text-teal-600 flex-shrink-0" />
+          <span>सुरक्षित स्टोरेज: तुमचे वैद्यकीय दस्तऐवज सार्वजनिकरित्या उपलब्ध नसतात (Private streaming only).</span>
         </div>
 
         {/* Submit Button */}
@@ -306,7 +448,7 @@ export default function UploadPage({ onUploadSuccess }) {
 
       </div>
 
-      {/* Duplicate Alert Modal */}
+      {/* Duplicate Alert Modal (PRD 7.3) */}
       {duplicateModalOpen && (
         <DuplicateWarningModal
           duplicateInfo={duplicateInfo}

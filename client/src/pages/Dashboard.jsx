@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import TrendCharts from '../components/TrendCharts';
 import RecordCard from '../components/RecordCard';
+import FilePreviewModal from '../components/FilePreviewModal';
 import { 
   UploadCloud, 
   Share2, 
@@ -20,7 +21,9 @@ import {
   Sparkles,
   Phone,
   AlertTriangle,
-  Edit2
+  Edit2,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 
 export default function Dashboard({ 
@@ -36,26 +39,46 @@ export default function Dashboard({
   const [activeMeds, setActiveMeds] = useState([]);
   const [reminders, setReminders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewRecord, setPreviewRecord] = useState(null);
+  const [recordToDelete, setRecordToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function loadDashboardData() {
+    try {
+      const [recRes, medRes, remRes] = await Promise.all([
+        api.getRecords({ sort: 'desc' }),
+        api.getMedicines(),
+        api.getReminders()
+      ]);
+      setRecentRecords((recRes.records || []).slice(0, 5));
+      setActiveMeds((medRes || []).filter(m => m.is_active === 1));
+      setReminders(remRes || []);
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        const [recRes, medRes, remRes] = await Promise.all([
-          api.getRecords({ sort: 'desc' }),
-          api.getMedicines(),
-          api.getReminders()
-        ]);
-        setRecentRecords((recRes.records || []).slice(0, 5));
-        setActiveMeds((medRes || []).filter(m => m.is_active === 1));
-        setReminders(remRes || []);
-      } catch (err) {
-        console.error('Failed to load dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadDashboardData();
   }, []);
+
+  const handleConfirmDelete = async () => {
+    if (!recordToDelete) return;
+    setDeleting(true);
+    try {
+      await api.deleteRecord(recordToDelete.id);
+      setRecentRecords(prev => prev.filter(r => r.id !== recordToDelete.id));
+      setRecordToDelete(null);
+      loadDashboardData();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert(err.message || 'Failed to delete record');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleToggleReminder = async (id) => {
     try {
@@ -177,6 +200,8 @@ export default function Dashboard({
                   record={record}
                   onExplain={onExplain}
                   onShare={onShare}
+                  onPreviewFile={(rec) => setPreviewRecord(rec)}
+                  onDelete={(rec) => setRecordToDelete(rec)}
                 />
               ))}
             </div>
@@ -342,6 +367,95 @@ export default function Dashboard({
         </div>
 
       </div>
+
+      {previewRecord && (
+        <FilePreviewModal
+          record={previewRecord}
+          onClose={() => setPreviewRecord(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {recordToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border-2 border-red-300 animate-scaleUp space-y-4">
+            
+            <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 mx-auto shadow-inner">
+              <Trash2 className="w-7 h-7" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                Delete this record?
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Are you sure you want to delete this record? This will permanently remove the record, its uploaded file, and any linked test data or derived medicines from your timeline.
+              </p>
+            </div>
+
+            {/* Record Summary */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs space-y-1.5">
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Hospital:</span>
+                <span className="font-bold truncate max-w-[220px]">{recordToDelete.hospital}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Date:</span>
+                <span className="font-bold">{recordToDelete.date}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Category:</span>
+                <span className="font-bold">{recordToDelete.category}</span>
+              </div>
+              {recordToDelete.doctor && (
+                <div className="flex justify-between items-center text-slate-700">
+                  <span className="font-semibold text-slate-500">Doctor:</span>
+                  <span className="font-bold truncate max-w-[220px]">{recordToDelete.doctor}</span>
+                </div>
+              )}
+              {recordToDelete.file_name && (
+                <div className="flex justify-between items-center text-slate-700">
+                  <span className="font-semibold text-slate-500">Attached File:</span>
+                  <span className="font-mono text-[11px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 truncate max-w-[180px]">
+                    {recordToDelete.file_name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3 pt-1">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setRecordToDelete(null)}
+                className="w-1/2 py-3 px-4 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-2xl text-xs transition tap-target"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleConfirmDelete}
+                className="w-1/2 py-3 px-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold rounded-2xl text-xs transition shadow-lg shadow-red-600/30 flex items-center justify-center space-x-1.5 tap-target"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Record</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

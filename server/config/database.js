@@ -79,6 +79,7 @@ function initSchema() {
       frequency TEXT NOT NULL,
       timing TEXT,
       start_date TEXT,
+      duration TEXT,
       end_date TEXT,
       is_active INTEGER DEFAULT 1,
       source_record_id INTEGER,
@@ -131,6 +132,11 @@ function initSchema() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
   `);
+  try {
+    db.exec("ALTER TABLE medicines ADD COLUMN duration TEXT;");
+  } catch (e) {
+    // column already exists
+  }
 }
 
 initSchema();

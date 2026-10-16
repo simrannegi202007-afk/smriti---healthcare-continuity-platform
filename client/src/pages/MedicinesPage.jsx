@@ -24,6 +24,8 @@ export default function MedicinesPage() {
   const [dose, setDose] = useState('');
   const [frequency, setFrequency] = useState('Twice daily (1-0-1)');
   const [timing, setTiming] = useState('After meals (जेवणानंतर)');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [duration, setDuration] = useState('Ongoing / Long-term');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -70,6 +72,8 @@ export default function MedicinesPage() {
         dose,
         frequency,
         timing,
+        start_date: startDate,
+        duration,
         notes
       });
       setName('');
@@ -161,6 +165,25 @@ export default function MedicinesPage() {
                 <option value="At bedtime (झोपताना)">रात्री झोपताना (At bedtime)</option>
               </select>
             </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">सुरू तारीख (Start Date)</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">कालावधी (Duration / मुदत)</label>
+              <input
+                type="text"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="उदा. 30 days, 90 days, Ongoing"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800"
+              />
+            </div>
           </div>
           <div className="flex justify-end space-x-2 pt-2">
             <button
@@ -206,10 +229,20 @@ export default function MedicinesPage() {
                 </button>
               </div>
 
-              <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-3 rounded-2xl">
+              <div className="text-xs text-slate-600 space-y-1.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                 <p>🕒 वेळापत्रक: <strong>{med.frequency}</strong></p>
                 <p>🍽️ सूचना: <strong>{med.timing}</strong></p>
-                {med.notes && <p className="text-slate-500 text-[11px] mt-1">{med.notes}</p>}
+                <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-slate-500 border-t border-slate-200/60">
+                  <span>📅 सुरू: <strong>{med.start_date || 'N/A'}</strong></span>
+                  <span>•</span>
+                  <span>⏳ कालावधी: <strong>{med.duration || 'Ongoing'}</strong></span>
+                </div>
+                {med.source_record_id && (
+                  <span className="inline-block text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 mt-1">
+                    📄 Derived from Doctor's Prescription
+                  </span>
+                )}
+                {med.notes && <p className="text-slate-500 text-[11px] mt-1 italic">{med.notes}</p>}
               </div>
             </div>
           ))}

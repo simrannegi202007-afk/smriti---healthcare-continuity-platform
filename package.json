@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,green\" \"npm run server\" \"npm run client\"",
     "client": "npm --prefix client run dev",
-    "server": "npm --prefix server run start",
+    "server": "npm --prefix server run dev",
     "server:watch": "npm --prefix server run dev",
     "seed": "npm --prefix server run seed",
     "setup": "node -e \"console.log('Setting up dependencies...');\" && npm --prefix server install && npm --prefix client install",
