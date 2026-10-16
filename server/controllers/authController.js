@@ -57,7 +57,7 @@ function login(req, res) {
 
 function register(req, res) {
   try {
-    const { name, contact, password, language = 'mr', abha_id } = req.body;
+    const { name, contact, password, language = 'en', abha_id } = req.body;
     if (!name || !contact || !password) {
       return res.status(400).json({ error: 'Name, contact number and password are required' });
     }
@@ -177,7 +177,15 @@ function updateSettings(req, res) {
 
 function updateProfile(req, res) {
   try {
-    const { blood_group, allergies, conditions, emergency_contact_name, emergency_contact_phone, emergency_contact_relation } = req.body;
+    const { 
+      blood_group, 
+      allergies, 
+      conditions, 
+      emergency_contact_name, 
+      emergency_contact_phone, 
+      emergency_contact_relation,
+      abha_id 
+    } = req.body;
 
     const allergiesStr = Array.isArray(allergies) ? JSON.stringify(allergies) : allergies;
     const conditionsStr = Array.isArray(conditions) ? JSON.stringify(conditions) : conditions;
@@ -198,8 +206,33 @@ function updateProfile(req, res) {
       `).run(req.user.id, blood_group, allergiesStr, conditionsStr, emergency_contact_name, emergency_contact_phone, emergency_contact_relation);
     }
 
-    res.json({ success: true });
+    if (abha_id !== undefined) {
+      db.prepare('UPDATE users SET abha_id = ? WHERE id = ?').run(abha_id || null, req.user.id);
+    }
+
+    const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const updatedProfile = db.prepare('SELECT * FROM health_profiles WHERE user_id = ?').get(req.user.id);
+
+    res.json({ 
+      success: true,
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        contact: updatedUser.contact,
+        language: updatedUser.language,
+        abha_id: updatedUser.abha_id,
+        profile: {
+          blood_group: updatedProfile.blood_group,
+          allergies: JSON.parse(updatedProfile.allergies || '[]'),
+          conditions: JSON.parse(updatedProfile.conditions || '[]'),
+          emergency_contact_name: updatedProfile.emergency_contact_name,
+          emergency_contact_phone: updatedProfile.emergency_contact_phone,
+          emergency_contact_relation: updatedProfile.emergency_contact_relation
+        }
+      }
+    });
   } catch (err) {
+    console.error('updateProfile error:', err);
     res.status(500).json({ error: 'Failed to update health profile' });
   }
 }

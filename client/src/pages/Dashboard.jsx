@@ -17,14 +17,18 @@ import {
   Droplet,
   ChevronRight,
   Calendar,
-  Sparkles
+  Sparkles,
+  Phone,
+  AlertTriangle,
+  Edit2
 } from 'lucide-react';
 
 export default function Dashboard({ 
   onNavigate, 
   onExplain, 
   onShare, 
-  onOpenEmergency 
+  onOpenEmergency,
+  onOpenProfile
 }) {
   const { t } = useTranslation();
   const { user, profile } = useAuth();
@@ -62,89 +66,104 @@ export default function Dashboard({
     }
   };
 
-  const allergies = profile?.allergies || ['Penicillin (Severe rash)', 'Sulfa Drugs'];
-  const conditions = profile?.conditions || ['Type 2 Diabetes Mellitus', 'Mild Hypertension', 'Bilateral Knee Osteoarthritis'];
+  const allergies = profile?.allergies || ['Penicillin (Severe rash & swelling)', 'Sulfa Drugs'];
+  const conditions = profile?.conditions || ['Type 2 Diabetes Mellitus (2 yrs)', 'Mild Hypertension', 'Bilateral Knee Osteoarthritis'];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
       
-      {/* Patient Welcome & Quick Health Header */}
+      {/* Patient Welcome & Quick Actions Hero (PRD 7.2) */}
       <div className="bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 rounded-3xl text-white p-6 sm:p-8 shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <div className="flex items-center space-x-2 text-teal-300 text-xs font-semibold mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <div className="flex items-center space-x-2 text-teal-300 text-xs font-bold mb-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
               <span>{t('app.subtagline')}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
               {user?.name || 'Mrs. Sunita Sharma'}
             </h1>
-            <p className="text-teal-200 text-xs sm:text-sm mt-1">
-              {t('app.abhaNumber')} • वय: ६२ वर्षे • महाराष्ट्र
+            <p className="text-teal-200 text-xs sm:text-sm mt-1 font-medium">
+              ABHA ID: <span className="font-mono font-bold">{user?.abha_id || '91-4523-8812-7019'}</span> • Age: 62 • Maharashtra
             </p>
 
-            {/* Vitals Badges */}
+            {/* Quick Vitals Badges */}
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="px-3 py-1.5 rounded-xl bg-teal-800/80 border border-teal-600/50 flex items-center space-x-1.5 font-bold">
-                <Droplet className="w-3.5 h-3.5 text-red-400" />
-                <span>रक्तगट: {profile?.blood_group || 'B+'}</span>
+              <span className="px-3 py-1.5 rounded-xl bg-teal-800/80 border border-teal-600/50 flex items-center space-x-1.5 font-bold shadow-xs">
+                <Droplet className="w-3.5 h-3.5 text-red-400 fill-red-400" />
+                <span>{t('healthProfile.bloodGroup')}: <strong className="text-white">{profile?.blood_group || 'B+'}</strong></span>
               </span>
-              <span className="px-3 py-1.5 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-200 flex items-center space-x-1.5 font-bold">
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-                <span>ॲलर्जी: {allergies[0]}</span>
+
+              {/* Prominent Allergy Badge on Hero */}
+              <span className="px-3 py-1.5 rounded-xl bg-rose-950/90 border border-rose-500 text-rose-200 flex items-center space-x-1.5 font-bold shadow-xs">
+                <ShieldAlert className="w-4 h-4 text-rose-400 animate-pulse" />
+                <span>{allergies[0] || 'Penicillin'}</span>
               </span>
-              <span className="px-3 py-1.5 rounded-xl bg-teal-800/80 border border-teal-600/50 flex items-center space-x-1.5 font-bold">
+
+              <span className="px-3 py-1.5 rounded-xl bg-teal-800/80 border border-teal-600/50 flex items-center space-x-1.5 font-bold shadow-xs">
                 <Pill className="w-3.5 h-3.5 text-amber-300" />
-                <span>३ चालू औषधे</span>
+                <span>{activeMeds.length} {t('dashboard.activeMeds')}</span>
               </span>
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 self-stretch md:self-auto">
+          {/* Quick Actions Grid (PRD 7.2: Upload, Share, Emergency Card) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2.5 self-stretch md:self-auto">
             <button
               onClick={() => onNavigate('upload')}
-              className="p-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-md transition tap-target"
+              className="p-3.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-2xl text-xs font-extrabold flex flex-col items-center justify-center space-y-1.5 shadow-md shadow-teal-900/30 transition tap-target"
             >
               <UploadCloud className="w-5 h-5 text-white" />
               <span>{t('nav.upload')}</span>
             </button>
             <button
               onClick={() => onNavigate('share')}
-              className="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-md transition tap-target"
+              className="p-3.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-2xl text-xs font-extrabold flex flex-col items-center justify-center space-y-1.5 shadow-md shadow-blue-900/30 transition tap-target"
             >
               <Share2 className="w-5 h-5 text-white" />
               <span>{t('nav.share')}</span>
             </button>
             <button
               onClick={onOpenEmergency}
-              className="p-3 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl text-xs font-bold flex flex-col items-center justify-center space-y-1 shadow-md transition col-span-2 sm:col-span-1 tap-target"
+              className="p-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white rounded-2xl text-xs font-extrabold flex flex-col items-center justify-center space-y-1.5 shadow-md shadow-red-900/30 transition tap-target animate-pulse"
             >
               <AlertCircle className="w-5 h-5 text-white" />
               <span>{t('nav.emergency')}</span>
+            </button>
+            <button
+              onClick={onOpenProfile}
+              className="p-3.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-teal-200 border border-teal-600/40 rounded-2xl text-xs font-extrabold flex flex-col items-center justify-center space-y-1.5 shadow-md transition tap-target"
+            >
+              <Heart className="w-5 h-5 text-rose-400" />
+              <span>{t('healthProfile.title')}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Vitals & Trends + Active Meds */}
+      {/* Main Grid: Left (Trends + 5 Recent Records) & Right (Health Profile + Meds + Reminders) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column: Interactive Biomarker Trends (2 cols on large screen) */}
+        {/* Left Column: Interactive Biomarker Trends & Recent Timeline Entries (PRD 7.2) */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Trend Charts */}
+          
+          {/* Trend Charts across reports (HbA1c & Hemoglobin) */}
           <TrendCharts />
 
-          {/* Recent Records (5 entries) */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Overview of 5 most recent timeline entries with "View full history" button (PRD 7.2) */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">{t('dashboard.recentRecords')}</h3>
-                <p className="text-xs text-slate-500">Cross-hospital history ordered by date</p>
+                <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl">
+                  {t('dashboard.recentRecords')}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {t('timeline.subtitle')}
+                </p>
               </div>
               <button
                 onClick={() => onNavigate('timeline')}
-                className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center space-x-1"
+                className="text-xs font-extrabold text-teal-700 hover:text-teal-900 flex items-center space-x-1.5 px-3 py-2 bg-teal-50 hover:bg-teal-100 rounded-xl transition tap-target self-start sm:self-auto"
               >
                 <span>{t('dashboard.viewAll')}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -164,40 +183,105 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Right Column: Health Profile, Meds & Daily Reminders */}
+        {/* Right Column: Health Profile (PRD 7.6) + Active Medicines & Daily Reminders */}
         <div className="space-y-6">
           
-          {/* Critical Allergies & Conditions Card */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-slate-900 text-base flex items-center space-x-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              <span>{t('dashboard.allergies')}</span>
-            </h3>
-
-            <div className="space-y-2">
-              {allergies.map((allergy, i) => (
-                <div key={i} className="p-3 bg-red-50 border border-red-200 rounded-2xl flex items-center space-x-2 text-xs font-bold text-red-900">
-                  <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                  <span>{allergy}</span>
-                </div>
-              ))}
+          {/* PRD Section 7.6: Health Profile Card (Blood group, allergies with prominent warning style, conditions, emergency contact) */}
+          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+            
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <Heart className="w-5 h-5 text-rose-500 fill-rose-500" />
+                <h3 className="font-black text-slate-900 text-base">
+                  {t('healthProfile.title')}
+                </h3>
+              </div>
+              <button
+                onClick={onOpenProfile}
+                className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center space-x-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 rounded-xl transition tap-target"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                <span>{t('healthProfile.editButton')}</span>
+              </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-100">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+            {/* Blood Group Display */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
+              <div className="flex items-center space-x-2">
+                <Droplet className="w-5 h-5 text-red-600 fill-red-600" />
+                <span className="text-xs font-bold text-slate-700">{t('healthProfile.bloodGroup')}</span>
+              </div>
+              <span className="text-lg font-black text-red-600 bg-red-100 px-3 py-0.5 rounded-xl border border-red-200">
+                {profile?.blood_group || 'B+'}
+              </span>
+            </div>
+
+            {/* CRITICAL ALLERGIES WITH PROMINENT WARNING STYLING & ICON (PRD 7.6) */}
+            <div className="bg-red-50/90 border-2 border-red-400 rounded-2xl p-4 space-y-2.5 shadow-sm">
+              <div className="flex items-center space-x-2">
+                <ShieldAlert className="w-5 h-5 text-red-600 flex-shrink-0 animate-pulse" />
+                <h4 className="font-black text-red-950 text-xs uppercase tracking-wider">
+                  {t('dashboard.allergies')} / CRITICAL
+                </h4>
+              </div>
+
+              <div className="space-y-1.5">
+                {allergies.map((allergy, i) => (
+                  <div 
+                    key={i} 
+                    className="p-2.5 bg-white border-2 border-red-500 rounded-xl flex items-center space-x-2 text-xs font-black text-red-950 shadow-xs"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-red-600 fill-red-100 flex-shrink-0" />
+                    <span>{allergy}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[10px] text-red-800 font-bold leading-tight">
+                {t('healthProfile.allergyNotice')}
+              </p>
+            </div>
+
+            {/* Chronic Conditions */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
                 {t('dashboard.conditions')}
               </span>
               <div className="space-y-1.5">
                 {conditions.map((c, i) => (
-                  <div key={i} className="text-xs font-semibold text-slate-700 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                    • {c}
+                  <div key={i} className="text-xs font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center space-x-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-600"></span>
+                    <span>{c}</span>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Emergency Contact with One-Tap Call Button */}
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
+              <div>
+                <span className="font-bold text-emerald-900 block text-[10px] uppercase">
+                  {t('healthProfile.emergencyContact')}
+                </span>
+                <span className="font-extrabold text-slate-900 text-xs">
+                  {profile?.emergency_contact_name || 'Rohan Sharma (Son)'}
+                </span>
+                <span className="text-[11px] text-emerald-800 font-semibold block">
+                  {profile?.emergency_contact_phone || '+91 98201 12345'}
+                </span>
+              </div>
+              <a
+                href={`tel:${profile?.emergency_contact_phone || '+919820112345'}`}
+                className="flex items-center space-x-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-xs transition tap-target"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Call</span>
+              </a>
+            </div>
+
           </div>
 
-          {/* Currently Taking Medicines */}
+          {/* Currently Taking Medicines (PRD 7.2) */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-base flex items-center space-x-2">
@@ -208,7 +292,7 @@ export default function Dashboard({
                 onClick={() => onNavigate('medicines')}
                 className="text-xs text-teal-700 font-bold hover:underline"
               >
-                व्यवस्थापित करा
+                View all
               </button>
             </div>
 
@@ -217,21 +301,21 @@ export default function Dashboard({
                 <div key={med.id} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-900 text-xs">{med.name}</span>
-                    <span className="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                    <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
                       {med.dose}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">{med.frequency} • {med.timing}</p>
+                  <p className="text-[11px] text-slate-500 font-medium">{med.frequency} • {med.timing}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Medication Reminders Checklist */}
+          {/* Daily Reminders Checklist (PRD 7.2 & 7.14) */}
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-amber-950 text-base flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-amber-600" />
-              <span>आजच्या आठवणी (Reminders)</span>
+              <span>Upcoming Reminders</span>
             </h3>
 
             <div className="space-y-2">
@@ -239,10 +323,10 @@ export default function Dashboard({
                 <div
                   key={rem.id}
                   onClick={() => handleToggleReminder(rem.id)}
-                  className={`p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between text-xs ${
+                  className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between text-xs tap-target ${
                     rem.is_completed 
                       ? 'bg-white/50 border-slate-200 text-slate-400 line-through' 
-                      : 'bg-white border-amber-200 text-slate-800 font-medium shadow-sm'
+                      : 'bg-white border-amber-200 text-slate-900 font-bold shadow-xs'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5">

@@ -32,7 +32,7 @@ function seedDatabase() {
     'Mrs. Sunita Sharma',
     '9820098200',
     passwordHash,
-    'mr', // Marathi default per PRD demo scenario
+    'en', // English default
     '91-4523-8812-7019',
     JSON.stringify({ font_size: 'lg', simple_mode: true, notifications: true })
   );

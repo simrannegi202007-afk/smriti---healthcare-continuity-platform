@@ -7,6 +7,8 @@ import ExplainModal from './components/ExplainModal';
 import DoctorShareModal from './components/DoctorShareModal';
 import EmergencyCardModal from './components/EmergencyCardModal';
 import VoiceAssistantModal from './components/VoiceAssistantModal';
+import HealthProfileModal from './components/HealthProfileModal';
+import AuthModal from './components/AuthModal';
 
 import Dashboard from './pages/Dashboard';
 import UploadPage from './pages/UploadPage';
@@ -26,6 +28,8 @@ function MainApp() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Check URL pathname for direct public share routes
   const path = window.location.pathname;
@@ -42,12 +46,14 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Navigation */}
+      {/* Top Navigation with Smriti Brand & Tagline */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenEmergency={() => setEmergencyModalOpen(true)}
         onOpenVoice={() => setVoiceModalOpen(true)}
+        onOpenProfile={() => setProfileModalOpen(true)}
+        onOpenAuth={() => setAuthModalOpen(true)}
       />
 
       {/* Main Page Content */}
@@ -57,10 +63,12 @@ function MainApp() {
             onNavigate={(tab) => {
               if (tab === 'emergency') setEmergencyModalOpen(true);
               else if (tab === 'voice') setVoiceModalOpen(true);
+              else if (tab === 'profile') setProfileModalOpen(true);
               else setActiveTab(tab);
             }}
             onOpenEmergency={() => setEmergencyModalOpen(true)}
             onOpenVoice={() => setVoiceModalOpen(true)}
+            onOpenProfile={() => setProfileModalOpen(true)}
           />
         ) : activeTab === 'dashboard' ? (
           <Dashboard
@@ -68,6 +76,7 @@ function MainApp() {
             onExplain={(rec) => setExplainRecord(rec)}
             onShare={(rec) => setShareModalOpen(true)}
             onOpenEmergency={() => setEmergencyModalOpen(true)}
+            onOpenProfile={() => setProfileModalOpen(true)}
           />
         ) : activeTab === 'timeline' ? (
           <TimelineView
@@ -93,6 +102,7 @@ function MainApp() {
             onExplain={(rec) => setExplainRecord(rec)}
             onShare={(rec) => setShareModalOpen(true)}
             onOpenEmergency={() => setEmergencyModalOpen(true)}
+            onOpenProfile={() => setProfileModalOpen(true)}
           />
         )}
       </main>
@@ -103,7 +113,7 @@ function MainApp() {
           🌿 Smriti (स्मृती / स्मृति) — Healthcare Continuity Platform for India
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
-          "Your health, remembered." • ABHA Identity Layer Complement • Multilingual Marathi, Hindi & English
+          "Your health, remembered." • ABHA Identity Layer Complement • Multilingual English, Hindi & Marathi
         </p>
       </footer>
 
@@ -135,6 +145,19 @@ function MainApp() {
             setVoiceModalOpen(false);
             setEmergencyModalOpen(true);
           }}
+        />
+      )}
+
+      {profileModalOpen && (
+        <HealthProfileModal
+          onClose={() => setProfileModalOpen(false)}
+        />
+      )}
+
+      {authModalOpen && (
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
         />
       )}
     </div>

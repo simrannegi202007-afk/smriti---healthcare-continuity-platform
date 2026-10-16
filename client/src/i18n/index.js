@@ -6,6 +6,9 @@ import en from './locales/en.json';
 import hi from './locales/hi.json';
 import mr from './locales/mr.json';
 
+// Default to English as requested, remember user's choice in localStorage
+const savedLanguage = localStorage.getItem('smriti_language') || 'en';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -16,7 +19,7 @@ i18n
       mr: { translation: mr },
     },
     fallbackLng: 'en',
-    lng: localStorage.getItem('smriti_language') || 'mr', // default to Marathi for Mrs. Sharma demo per PRD section 4 & 15
+    lng: savedLanguage,
     interpolation: {
       escapeValue: false, // React already escapes XSS
     },

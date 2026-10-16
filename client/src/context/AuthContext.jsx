@@ -11,7 +11,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [simpleMode, setSimpleMode] = useState(true);
   const [fontSize, setFontSize] = useState('md'); // 'sm' | 'md' | 'lg'
-  const [language, setLanguage] = useState(localStorage.getItem('smriti_language') || 'mr');
+  
+  // Default language is English as requested, remember user's choice in localStorage
+  const [language, setLanguage] = useState(localStorage.getItem('smriti_language') || 'en');
 
   // Apply font size class to html root
   useEffect(() => {
@@ -20,11 +22,14 @@ export function AuthProvider({ children }) {
     root.classList.add(`font-size-${fontSize}`);
   }, [fontSize]);
 
-  // Synchronize language with i18n
+  // Synchronize language with i18n and persist in localStorage
   const changeLanguage = (lang) => {
     setLanguage(lang);
     localStorage.setItem('smriti_language', lang);
     i18n.changeLanguage(lang);
+    if (user?.id) {
+      api.updateSettings({ language: lang }).catch(() => {});
+    }
   };
 
   // Check current session or auto-login with demo user for seamless demonstration
@@ -32,15 +37,17 @@ export function AuthProvider({ children }) {
     async function initAuth() {
       try {
         const storedToken = localStorage.getItem('smriti_token');
+        const activeLang = localStorage.getItem('smriti_language') || 'en';
+
         if (storedToken) {
           const res = await api.getMe();
           setUser(res.user);
           setProfile(res.user.profile);
           if (res.user.settings?.font_size) setFontSize(res.user.settings.font_size);
           if (res.user.settings?.simple_mode !== undefined) setSimpleMode(res.user.settings.simple_mode);
-          if (res.user.language) changeLanguage(res.user.language);
+          changeLanguage(activeLang);
         } else {
-          // Auto-login with Demo Patient Mrs. Sunita Sharma
+          // Auto-login with Demo Patient Mrs. Sunita Sharma (62 yrs, Maharashtra)
           const loginRes = await api.login({ contact: '9820098200', password: 'password123' });
           localStorage.setItem('smriti_token', loginRes.token);
           setToken(loginRes.token);
@@ -48,7 +55,7 @@ export function AuthProvider({ children }) {
           setProfile(loginRes.user.profile);
           if (loginRes.user.settings?.font_size) setFontSize(loginRes.user.settings.font_size);
           if (loginRes.user.settings?.simple_mode !== undefined) setSimpleMode(loginRes.user.settings.simple_mode);
-          changeLanguage(loginRes.user.language || 'mr');
+          changeLanguage(activeLang);
         }
       } catch (err) {
         console.warn('Initial session check notice:', err);
@@ -66,7 +73,19 @@ export function AuthProvider({ children }) {
     setToken(res.token);
     setUser(res.user);
     setProfile(res.user.profile);
-    if (res.user.language) changeLanguage(res.user.language);
+    const activeLang = localStorage.getItem('smriti_language') || res.user.language || 'en';
+    changeLanguage(activeLang);
+    return res;
+  };
+
+  const register = async (data) => {
+    const res = await api.register(data);
+    localStorage.setItem('smriti_token', res.token);
+    setToken(res.token);
+    setUser(res.user);
+    setProfile(res.user.profile);
+    const activeLang = localStorage.getItem('smriti_language') || data.language || 'en';
+    changeLanguage(activeLang);
     return res;
   };
 
@@ -103,11 +122,13 @@ export function AuthProvider({ children }) {
       user,
       profile,
       token,
+      isLoggedIn: !!token && !!user,
       loading,
       simpleMode,
       fontSize,
       language,
       login,
+      register,
       logout,
       toggleSimpleMode,
       updateFontSize,
