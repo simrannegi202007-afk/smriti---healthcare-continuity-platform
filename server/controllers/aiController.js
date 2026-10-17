@@ -333,54 +333,185 @@ async function explainReport(req, res) {
 
 function processVoiceCommand(req, res) {
   try {
-    const { query, language = 'mr' } = req.body;
+    const { query, language = 'en' } = req.body;
     const userId = req.user.id;
-    const lower = (query || '').toLowerCase();
+    const lower = (query || '').toLowerCase().trim();
 
     // Check user profile, meds, allergies
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     const profile = db.prepare('SELECT * FROM health_profiles WHERE user_id = ?').get(userId);
     const meds = db.prepare('SELECT * FROM medicines WHERE user_id = ? AND is_active = 1').all(userId);
-    const latestRecord = db.prepare('SELECT * FROM records WHERE user_id = ? ORDER BY date DESC LIMIT 1').get(userId);
+    const latestLabRecord = db.prepare(`
+      SELECT * FROM records 
+      WHERE user_id = ? AND (LOWER(category) LIKE '%lab%' OR LOWER(category) LIKE '%report%') 
+      ORDER BY date DESC LIMIT 1
+    `).get(userId) || db.prepare('SELECT * FROM records WHERE user_id = ? ORDER BY date DESC LIMIT 1').get(userId);
 
     let answer = '';
+    let action = null;
+    let disclaimer = null;
 
-    if (lower.includes('medicine') || lower.includes('दवा') || lower.includes('औषध')) {
-      const medList = meds.map(m => `${m.name} (${m.dose}, ${m.frequency})`).join(', ');
+    // 1. Open Emergency Card Intent
+    const isEmergencyCard =
+      ((lower.includes('card') || lower.includes('कार्ड')) &&
+       (lower.includes('emerg') || lower.includes('इमरजेंसी') || lower.includes('इमर्जन्सी') || lower.includes('आपत्कालीन') || lower.includes('open') || lower.includes('खोलो') || lower.includes('खोलें') || lower.includes('उघडा') || lower.includes('दाखवा'))) ||
+      lower.includes('emergency card') ||
+      lower.includes('open emergency') ||
+      lower.includes('इमरजेंसी कार्ड') ||
+      lower.includes('इमर्जन्सी कार्ड') ||
+      lower.includes('आपत्कालीन कार्ड');
+
+    // 2. Emergency Contact Intent
+    const isEmergencyContact =
+      !isEmergencyCard && (
+        lower.includes('emergency contact') ||
+        lower.includes('इमरजेंसी संपर्क') ||
+        lower.includes('इमर्जन्सी संपर्क') ||
+        lower.includes('आपत्कालीन संपर्क') ||
+        ((lower.includes('contact') || lower.includes('संपर्क') || lower.includes('number') || lower.includes('नंबर') || lower.includes('phone') || lower.includes('फोन') || lower.includes('call') || lower.includes('कॉल') || lower.includes('who')) &&
+         (lower.includes('emerg') || lower.includes('इमरजेंसी') || lower.includes('इमर्जन्सी') || lower.includes('आपत्कालीन')))
+      );
+
+    // 3. Blood Group Intent
+    const isBloodGroup =
+      lower.includes('blood') ||
+      lower.includes('रक्तगट') ||
+      lower.includes('रक्त गट') ||
+      lower.includes('रक्त समूह') ||
+      lower.includes('रक्त') ||
+      lower.includes('ब्लड') ||
+      lower.includes('खून');
+
+    // 4. Allergies Intent
+    const isAllergy =
+      lower.includes('allerg') ||
+      lower.includes('एलर्जी') ||
+      lower.includes('एलर्जिक') ||
+      lower.includes('ऍलर्जी') ||
+      lower.includes('ॲलर्जी') ||
+      lower.includes('अलर्जी') ||
+      lower.includes('लर्जी');
+
+    // 5. Current Medicines Intent
+    const isMedicine =
+      lower.includes('medicine') ||
+      lower.includes('medication') ||
+      lower.includes('meds') ||
+      lower.includes('drug') ||
+      lower.includes('tablet') ||
+      lower.includes('pill') ||
+      lower.includes('prescription') ||
+      lower.includes('दवा') ||
+      lower.includes('दवाई') ||
+      lower.includes('औषध') ||
+      lower.includes('गोली') ||
+      lower.includes('गोळ्या');
+
+    // 6. Latest Lab Report Summary Intent
+    const isReport =
+      lower.includes('report') ||
+      lower.includes('lab') ||
+      lower.includes('test') ||
+      lower.includes('summary') ||
+      lower.includes('रिपोर्ट') ||
+      lower.includes('जांच') ||
+      lower.includes('तपास') ||
+      lower.includes('चाचणी') ||
+      lower.includes('प्रयोगशाळा');
+
+    if (isEmergencyCard) {
+      action = 'open_emergency';
       if (language === 'mr') {
-        answer = `तुम्हाला सध्या ${meds.length} औषधे चालू आहेत: ${medList}. कृपया ही औषधे वेळेवर घ्या.`;
+        answer = 'तुमचे आपत्कालीन कार्ड उघडत आहे.';
       } else if (language === 'hi') {
-        answer = `आपकी वर्तमान में ${meds.length} दवाइयां चल रही हैं: ${medList}। कृपया इन्हें समय पर लें।`;
+        answer = 'आपका इमरजेंसी कार्ड खोला जा रहा है।';
       } else {
-        answer = `You are currently taking ${meds.length} active medications: ${medList}.`;
+        answer = 'Opening your Emergency Card.';
       }
-    } else if (lower.includes('allergy') || lower.includes('एलर्जी') || lower.includes('ॲलर्जी')) {
+    } else if (isEmergencyContact) {
+      const contactName = profile?.emergency_contact_name || 'Rohan Sharma';
+      const contactPhone = profile?.emergency_contact_phone || '+91 98201 12345';
+      if (language === 'mr') {
+        answer = `तुमचे आपत्कालीन संपर्क ${contactName} असून त्यांचा फोन नंबर ${contactPhone} आहे.`;
+      } else if (language === 'hi') {
+        answer = `आपके आपातकालीन संपर्क ${contactName} हैं, जिनका फोन नंबर ${contactPhone} है।`;
+      } else {
+        answer = `Your emergency contact is ${contactName} at ${contactPhone}.`;
+      }
+    } else if (isBloodGroup) {
+      const bg = profile?.blood_group || 'B+';
+      if (language === 'mr') {
+        answer = `तुमचा रक्तगट ${bg} आहे.`;
+      } else if (language === 'hi') {
+        answer = `आपका ब्लड ग्रुप ${bg} है।`;
+      } else {
+        answer = `Your blood group is ${bg}.`;
+      }
+    } else if (isAllergy) {
       const allergies = profile ? JSON.parse(profile.allergies || '[]') : [];
       const list = allergies.join(', ');
-      if (language === 'mr') {
-        answer = `तुमच्या नोंदींनुसार तुम्हाला ॲलर्जी आहे: ${list}. कोणत्याही नवीन उपचारापूर्वी डॉक्टरांना ही माहिती द्या.`;
-      } else if (language === 'hi') {
-        answer = `आपके स्वास्थ्य रिकॉर्ड के अनुसार आपको एलर्जी है: ${list}। किसी भी नए डॉक्टर को यह अवश्य बताएं।`;
-      } else {
-        answer = `Your recorded critical allergies are: ${list}. Please always notify treating medical staff.`;
-      }
-    } else if (lower.includes('report') || lower.includes('तपासणी') || lower.includes('जांच')) {
-      if (latestRecord) {
+      if (allergies.length > 0) {
         if (language === 'mr') {
-          answer = `तुमचा सर्वात अलीकडील रिपोर्ट ${latestRecord.hospital} मधील ${latestRecord.date} चा आहे: ${latestRecord.ai_summary}`;
+          answer = `तुमच्या नोंदींनुसार तुम्हाला ऍलर्जी आहे: ${list}.`;
         } else if (language === 'hi') {
-          answer = `आपकी हाल की रिपोर्ट ${latestRecord.hospital} की ${latestRecord.date} की है: ${latestRecord.ai_summary}`;
+          answer = `आपके रिकॉर्ड के अनुसार आपकी एलर्जी हैं: ${list}।`;
         } else {
-          answer = `Your latest record from ${latestRecord.hospital} on ${latestRecord.date} indicates: ${latestRecord.ai_summary}`;
+          answer = `Your recorded allergies are: ${list}.`;
+        }
+      } else {
+        if (language === 'mr') {
+          answer = 'तुमच्या नोंदींमध्ये कोणतीही ऍलर्जी नोंदवलेली नाही.';
+        } else if (language === 'hi') {
+          answer = 'आपके रिकॉर्ड में कोई ज्ञात एलर्जी दर्ज नहीं है।';
+        } else {
+          answer = 'You have no recorded allergies.';
+        }
+      }
+    } else if (isMedicine) {
+      const medList = meds.map(m => `${m.name} (${m.dose}, ${m.frequency})`).join(', ');
+      if (meds.length > 0) {
+        if (language === 'mr') {
+          answer = `तुम्हाला सध्या ${meds.length} औषधे चालू आहेत: ${medList}.`;
+        } else if (language === 'hi') {
+          answer = `आपकी वर्तमान में ${meds.length} दवाइयां चल रही हैं: ${medList}।`;
+        } else {
+          answer = `You are currently taking ${meds.length} active medicines: ${medList}.`;
+        }
+      } else {
+        if (language === 'mr') {
+          answer = 'सध्या तुमच्याकडे कोणतीही चालू औषधे नोंदवलेली नाहीत.';
+        } else if (language === 'hi') {
+          answer = 'वर्तमान में आपकी कोई सक्रिय दवाई दर्ज नहीं है।';
+        } else {
+          answer = 'You are currently not taking any active medicines.';
+        }
+      }
+    } else if (isReport) {
+      disclaimer = DISCLAIMERS[language] || DISCLAIMERS.en;
+      if (latestLabRecord) {
+        if (language === 'mr') {
+          answer = `तुमचा सर्वात अलीकडील लॅब रिपोर्ट ${latestLabRecord.hospital} चा ${latestLabRecord.date} रोजीचा आहे: ${latestLabRecord.ai_summary}`;
+        } else if (language === 'hi') {
+          answer = `आपकी नवीनतम लैब रिपोर्ट ${latestLabRecord.hospital} की ${latestLabRecord.date} की है: ${latestLabRecord.ai_summary}`;
+        } else {
+          answer = `Your latest lab report from ${latestLabRecord.hospital} on ${latestLabRecord.date}: ${latestLabRecord.ai_summary}`;
+        }
+      } else {
+        if (language === 'mr') {
+          answer = 'तुमच्या आरोग्य नोंदींमध्ये कोणताही लॅब रिपोर्ट आढळला नाही.';
+        } else if (language === 'hi') {
+          answer = 'आपके स्वास्थ्य रिकॉर्ड में कोई लैब रिपोर्ट नहीं मिली।';
+        } else {
+          answer = 'No lab reports found in your health records.';
         }
       }
     } else {
+      // Fallback
       if (language === 'mr') {
-        answer = `मी स्मृति व्हॉईस असिस्टंट आहे. तुम्ही मला आजची औषधे, ॲलर्जी किंवा शेवटच्या रिपोर्टबद्दल विचारू शकता.`;
+        answer = 'मी औषधे, ऍलर्जी, रिपोर्ट, रक्तगट किंवा आपत्कालीन कार्डबद्दल मदत करू शकतो.';
       } else if (language === 'hi') {
-        answer = `मैं स्मृति वॉयस असिस्टेंट हूं। आप मुझसे वर्तमान दवाइयां, एलर्जी या अपनी हाल की रिपोर्ट के बारे में पूछ सकते हैं।`;
+        answer = 'मैं दवाइयों, एलर्जी, रिपोर्ट, ब्लड ग्रुप या इमरजेंसी कार्ड में मदद कर सकता हूँ।';
       } else {
-        answer = `I am your Smriti Assistant. You can ask me about your current medicines, recorded allergies, or recent health timeline.`;
+        answer = 'I can help with medicines, allergies, reports, blood group or emergency card.';
       }
     }
 
@@ -388,9 +519,11 @@ function processVoiceCommand(req, res) {
       query,
       answer,
       language,
-      disclaimer: DISCLAIMERS[language]
+      action,
+      disclaimer
     });
   } catch (err) {
+    console.error('processVoiceCommand error:', err);
     res.status(500).json({ error: 'Failed to process voice command' });
   }
 }

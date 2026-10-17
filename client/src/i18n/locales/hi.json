@@ -36,6 +36,7 @@
   },
   "dashboard": {
     "summaryStrip": "संक्षेप: {{years}} वर्षों में {{hospitals}} अस्पतालों के कुल {{count}} मेडिकल रिकॉर्ड",
+    "summaryStripSingular": "संक्षेप: {{years}} वर्ष में {{hospitals}} अस्पतालों के कुल {{count}} मेडिकल रिकॉर्ड",
     "quickActions": "त्वरित क्रियाएं",
     "recentRecords": "हाल के रिकॉर्ड",
     "viewAll": "सभी देखें",

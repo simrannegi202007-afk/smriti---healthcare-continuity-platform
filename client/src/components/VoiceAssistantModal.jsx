@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -22,9 +22,18 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const recognitionRef = useRef(null);
+  const isNavigatingRef = useRef(false);
 
   // Initialize Speech Recognition if supported
   const startListening = () => {
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      return;
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert('Speech recognition is not supported in this browser. Please type your query below.');
@@ -33,18 +42,32 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
 
     try {
       const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
       recognition.lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-IN';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => setIsListening(false);
-      recognition.onerror = () => setIsListening(false);
+      let recognizedTranscript = '';
 
+      recognition.onstart = () => setIsListening(true);
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        recognizedTranscript = transcript;
         setQuery(transcript);
-        handleSendQuery(transcript);
+      };
+      recognition.onerror = (e) => {
+        console.error('Speech recognition error:', e);
+        setIsListening(false);
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+        // Automatically submit the recognized text after speech finishes
+        if (recognizedTranscript && recognizedTranscript.trim()) {
+          handleSendQuery(recognizedTranscript);
+        }
       };
 
       recognition.start();
@@ -55,16 +78,16 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   };
 
   const handleSendQuery = async (queryText) => {
-    const q = queryText || query;
+    const q = (queryText !== undefined && queryText !== null ? queryText : query);
     if (!q || !q.trim()) return;
 
     setIsLoading(true);
     try {
-      const res = await api.processVoiceCommand({ query: q, language });
+      const res = await api.processVoiceCommand({ query: q.trim(), language });
       setResponse(res);
 
-      // Play audio response automatically
-      if (window.speechSynthesis) {
+      // Play audio response automatically in selected language
+      if (window.speechSynthesis && res.answer) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(res.answer);
         utterance.lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-US';
@@ -73,6 +96,14 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
         utterance.onend = () => setIsSpeaking(false);
         utterance.onerror = () => setIsSpeaking(false);
         window.speechSynthesis.speak(utterance);
+      }
+
+      // If action is to open emergency card
+      if (res.action === 'open_emergency' && onOpenEmergency) {
+        isNavigatingRef.current = true;
+        setTimeout(() => {
+          onOpenEmergency();
+        }, 1200);
       }
     } catch (err) {
       console.error('Failed to process voice query:', err);
@@ -89,7 +120,12 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
 
   useEffect(() => {
     return () => {
-      if (window.speechSynthesis) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {}
+      }
+      if (!isNavigatingRef.current && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
     };
@@ -167,14 +203,20 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSendQuery(query);
+                }
+              }}
               placeholder={t('voice.typePlaceholder')}
               className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
             <button
-              onClick={() => handleSendQuery()}
+              type="button"
+              onClick={() => handleSendQuery(query)}
               disabled={isLoading || !query.trim()}
-              className="p-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl disabled:opacity-50 transition"
+              className="p-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl disabled:opacity-50 transition cursor-pointer"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
@@ -190,9 +232,11 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
               <p className="text-sm font-semibold text-slate-900 leading-relaxed">
                 {response.answer}
               </p>
-              <div className="text-[11px] text-red-800 bg-red-100/60 p-2 rounded-lg border border-red-200">
-                {response.disclaimer}
-              </div>
+              {response.disclaimer && (
+                <div className="text-[11px] text-red-800 bg-red-100/60 p-2 rounded-lg border border-red-200">
+                  {response.disclaimer}
+                </div>
+              )}
             </div>
           )}
 

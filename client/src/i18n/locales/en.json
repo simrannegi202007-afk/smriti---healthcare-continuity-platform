@@ -36,6 +36,7 @@
   },
   "dashboard": {
     "summaryStrip": "Summary: {{count}} records across {{hospitals}} hospitals spanning {{years}} years",
+    "summaryStripSingular": "Summary: {{count}} records across {{hospitals}} hospitals spanning {{years}} year",
     "quickActions": "Quick Actions",
     "recentRecords": "Recent Timeline Entries",
     "viewAll": "View all",

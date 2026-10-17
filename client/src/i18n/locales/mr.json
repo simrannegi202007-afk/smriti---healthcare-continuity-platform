@@ -36,6 +36,7 @@
   },
   "dashboard": {
     "summaryStrip": "थोडक्यात: {{years}} वर्षांत {{hospitals}} रुग्णालयांमधील एकूण {{count}} वैद्यकीय नोंदी",
+    "summaryStripSingular": "थोडक्यात: {{years}} वर्षात {{hospitals}} रुग्णालयांमधील एकूण {{count}} वैद्यकीय नोंदी",
     "quickActions": "जलद कृती",
     "recentRecords": "अलीकडील नोंदी",
     "viewAll": "सर्व पहा",
