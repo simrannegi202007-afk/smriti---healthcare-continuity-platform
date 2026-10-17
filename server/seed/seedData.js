@@ -244,13 +244,17 @@ function seedDatabase() {
   insertReminder.run(userId, 'test', 'Fasting Blood Glucose Home Test (Accu-Chek)', 'Tomorrow 07:30 AM', 0);
   insertReminder.run(userId, 'follow_up', 'Dr. Arvind Patil Review - KEM Hospital OPD', '2026-11-10 10:30 AM', 0);
 
-  // 7. Insert Ready Doctor Share Link
+  // 7. Insert Ready Doctor Share Links (Active, Direct, Expired, Revoked)
   const insertShare = db.prepare(`
     INSERT INTO share_links (id, user_id, token, otp, record_ids, expires_at, is_revoked, doctor_note)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const pastExpired = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+  // 7a. Active Demo Doctor Link (with OTP 1234)
   insertShare.run(
     1,
     userId,
@@ -260,6 +264,42 @@ function seedDatabase() {
     tomorrow,
     0,
     'Patient presented for routine annual review. Glycemic control stable.'
+  );
+
+  // 7b. Ready Instant Doctor Link (No OTP needed for 1-click test)
+  insertShare.run(
+    2,
+    userId,
+    'demo-doctor-direct',
+    null,
+    'ALL',
+    nextWeek,
+    0,
+    'Follow-up review for diabetes management and knee osteoarthritis.'
+  );
+
+  // 7c. Ready Expired Link (demonstrates "Access Ended: Expired" page)
+  insertShare.run(
+    3,
+    userId,
+    'demo-doc-expired',
+    null,
+    'ALL',
+    pastExpired,
+    0,
+    null
+  );
+
+  // 7d. Ready Revoked Link (demonstrates "Access Ended: Revoked" page)
+  insertShare.run(
+    4,
+    userId,
+    'demo-doc-revoked',
+    null,
+    'ALL',
+    tomorrow,
+    1,
+    null
   );
 
   // 8. Insert Ready Emergency Card
@@ -272,10 +312,10 @@ function seedDatabase() {
     userId,
     'emergency-sunita-sharma',
     1,
-    JSON.stringify(['blood_group', 'allergies', 'conditions', 'medicines', 'emergency_contact'])
+    JSON.stringify(['name', 'age', 'blood_group', 'allergies', 'conditions', 'medicines', 'emergency_contact'])
   );
 
-  // 9. Insert Access Logs
+  // 9. Insert Access Logs (PRD 7.11 Audit Trail) using standardized codes
   const insertLog = db.prepare(`
     INSERT INTO access_logs (user_id, accessor_name, channel, action, records_viewed, ip_type, timestamp)
     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -283,35 +323,95 @@ function seedDatabase() {
 
   insertLog.run(
     userId,
-    'Dr. Arvind Patil (K.E.M. Hospital)',
+    'DOC_PATIL',
     'doctor_link',
-    'Viewed 24-hour Consented Patient Summary',
-    'All 9 Records & Lab Trends',
-    'Hospital Intranet (Mumbai)',
+    'DOCTOR_LINK_OPENED',
+    'ALL',
+    'HOSPITAL_INTRANET',
     '2025-08-20 11:15:32'
   );
 
   insertLog.run(
     userId,
-    'Apollo Emergency Casualty Desk',
+    'DOC_PATIL',
+    'doctor_link',
+    'DOCTOR_NOTE_ADDED',
+    'NONE',
+    'DOCTOR_PORTAL',
+    '2025-08-20 11:32:05'
+  );
+
+  insertLog.run(
+    userId,
+    'CASUALTY_DESK',
     'emergency_qr',
-    'Scanned Emergency QR Code (Unauthenticated life-saving triage)',
-    'Blood Group B+, Penicillin Allergy, Active Meds',
-    'Emergency Mobile Scan (Mumbai)',
+    'EMERGENCY_CARD_VIEWED',
+    'EMERGENCY_FIELDS',
+    'EMERGENCY_SCAN',
     '2024-12-02 08:44:19'
   );
 
   insertLog.run(
     userId,
-    'Dr. S. K. Joshi (Ruby Hall Clinic)',
+    'DOC_JOSHI',
     'doctor_link',
-    'Inspected Knee X-Ray & MRI Scans',
-    'Record #4 (Scan / X-Ray)',
-    'Clinic Desktop (Pune)',
+    'DOCUMENT_VIEWED',
+    'RECORD_#4',
+    'CLINICAL_LINK',
     '2024-09-22 16:30:10'
   );
 
-  console.log('✅ Smriti database seeded successfully with Mrs. Sunita Sharma data!');
+  insertLog.run(
+    userId,
+    'VISITING_DOCTOR',
+    'doctor_link',
+    'DOCUMENT_VIEWED',
+    'RECORD_#8',
+    'DOCUMENT_VIEWER',
+    '2025-06-25 14:02:44'
+  );
+
+  insertLog.run(
+    userId,
+    'PATIENT_CONSENT',
+    'doctor_link',
+    'DOCTOR_LINK_CREATED',
+    'ALL',
+    'PATIENT_PORTAL',
+    '2025-08-20 10:45:00'
+  );
+
+  insertLog.run(
+    userId,
+    'PATIENT_REVOCATION',
+    'doctor_link',
+    'LINK_REVOKED',
+    'NONE',
+    'PATIENT_PORTAL',
+    '2025-08-21 09:12:00'
+  );
+
+  insertLog.run(
+    userId,
+    'VISITING_DOCTOR',
+    'doctor_link',
+    'ACCESS_DENIED_REVOKED',
+    'NONE',
+    'CLINICAL_LINK',
+    '2025-08-21 09:15:00'
+  );
+
+  insertLog.run(
+    userId,
+    'VISITING_DOCTOR',
+    'doctor_link',
+    'ACCESS_DENIED_EXPIRED',
+    'NONE',
+    'CLINICAL_LINK',
+    '2025-08-22 14:00:00'
+  );
+
+  console.log('✅ Smriti database seeded successfully with Mrs. Sunita Sharma data, demo doctor links & emergency QR!');
 }
 
 if (require.main === module) {

@@ -91,9 +91,7 @@ function MainApp() {
         ) : activeTab === 'medicines' ? (
           <MedicinesPage />
         ) : activeTab === 'share' ? (
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <DoctorShareModal records={[]} onClose={() => setActiveTab('dashboard')} />
-          </div>
+          <DoctorShareModal records={[]} onClose={() => setActiveTab('dashboard')} />
         ) : activeTab === 'access-log' ? (
           <AccessLogPage />
         ) : (

@@ -83,33 +83,36 @@ export default function Navbar({
 
       {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 lg:gap-4">
           
-          {/* Logo & Tagline (Smriti: Your health, remembered.) */}
+          {/* Brand: Logo and Name on one line, Tagline on a small line under the logo with dedicated spacing */}
           <div 
-            className="flex items-center space-x-3 cursor-pointer select-none tap-target" 
+            className="flex flex-col justify-center flex-shrink-0 mr-4 lg:mr-8 cursor-pointer select-none tap-target py-1" 
             onClick={() => setActiveTab('dashboard')}
           >
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-teal-500/25 flex-shrink-0">
-              <span className="text-2xl sm:text-3xl">🌿</span>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                  {t('app.name')}
-                </span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-800 border border-teal-200 hidden sm:inline">
-                  {language === 'mr' ? 'स्मृती' : language === 'hi' ? 'स्मृति' : 'Health Continuity'}
-                </span>
+            {/* Row 1: Logo and Name on one line */}
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-sm flex-shrink-0">
+                <span className="text-lg sm:text-xl leading-none">🌿</span>
               </div>
-              <p className="text-xs sm:text-sm font-bold text-teal-700 -mt-0.5">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-none">
+                {t('app.name')}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-teal-50 text-teal-800 border border-teal-200 hidden 2xl:inline leading-none">
+                {language === 'mr' ? 'स्मृती' : language === 'hi' ? 'स्मृति' : 'Health Continuity'}
+              </span>
+            </div>
+            
+            {/* Row 2: Tagline on a small line under the logo with enough space, hidden on narrow screens */}
+            <div className="mt-1 pl-0.5 hidden md:block">
+              <p className="text-[11px] font-bold text-teal-700 tracking-wide leading-tight whitespace-nowrap truncate max-w-[210px]">
                 {t('app.tagline')}
               </p>
             </div>
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center space-x-1">
+          <nav className="hidden xl:flex items-center space-x-1 flex-shrink-0">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;

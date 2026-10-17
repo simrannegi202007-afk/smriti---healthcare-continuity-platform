@@ -327,6 +327,16 @@ function getRecordFile(req, res) {
             isAuthorized = ids.includes(record.id) || ids.includes(String(record.id)) || ids.includes(Number(record.id));
           } catch (e) {}
         }
+
+        if (isAuthorized) {
+          try {
+            const recCode = record.id === 4 ? 'RECORD_#4' : record.id === 8 ? 'RECORD_#8' : `RECORD_#${record.id}`;
+            db.prepare(`
+              INSERT INTO access_logs (user_id, accessor_name, channel, action, records_viewed, ip_type)
+              VALUES (?, 'VISITING_DOCTOR', 'doctor_link', 'DOCUMENT_VIEWED', ?, 'DOCUMENT_VIEWER')
+            `).run(share.user_id, recCode);
+          } catch (e) {}
+        }
       }
     }
 
