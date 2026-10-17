@@ -101,7 +101,9 @@ export const api = {
   addMedicine: (data) => request('/medicines', { method: 'POST', body: JSON.stringify(data) }),
   toggleMedicine: (id) => request(`/medicines/${id}/toggle`, { method: 'PATCH' }),
   getReminders: () => request('/medicines/reminders'),
+  addReminder: (data) => request('/medicines/reminders', { method: 'POST', body: JSON.stringify(data) }),
   toggleReminder: (id) => request(`/medicines/reminders/${id}/toggle`, { method: 'PATCH' }),
+  deleteReminder: (id) => request(`/medicines/reminders/${id}`, { method: 'DELETE' }),
 
   // Access Logs
   getAccessLogs: () => request('/access-logs')

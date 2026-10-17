@@ -86,10 +86,50 @@ function toggleReminder(req, res) {
   }
 }
 
+function addReminder(req, res) {
+  try {
+    const userId = req.user.id;
+    const { type, title, schedule_time } = req.body;
+
+    if (!title || !schedule_time) {
+      return res.status(400).json({ error: 'Reminder title and schedule time are required' });
+    }
+
+    const insert = db.prepare(`
+      INSERT INTO reminders (user_id, type, title, schedule_time, is_completed)
+      VALUES (?, ?, ?, ?, 0)
+    `);
+
+    const result = insert.run(userId, type || 'medicine', title, schedule_time);
+    const created = db.prepare('SELECT * FROM reminders WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add reminder' });
+  }
+}
+
+function deleteReminder(req, res) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = db.prepare('DELETE FROM reminders WHERE id = ? AND user_id = ?').run(id, userId);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Reminder not found' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete reminder' });
+  }
+}
+
 module.exports = {
   getMedicines,
   addMedicine,
   toggleMedicineStatus,
   getReminders,
-  toggleReminder
+  toggleReminder,
+  addReminder,
+  deleteReminder
 };

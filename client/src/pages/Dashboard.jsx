@@ -24,7 +24,8 @@ import {
   AlertTriangle,
   Edit2,
   Trash2,
-  Loader2
+  Loader2,
+  Plus
 } from 'lucide-react';
 
 export default function Dashboard({ 
@@ -81,12 +82,112 @@ export default function Dashboard({
     }
   };
 
+  const [showAddReminder, setShowAddReminder] = useState(false);
+  const [newReminderType, setNewReminderType] = useState('medicine');
+  const [newReminderText, setNewReminderText] = useState('');
+  const [newReminderDate, setNewReminderDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [newReminderTime, setNewReminderTime] = useState('09:00');
+  const [addingReminder, setAddingReminder] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const timeouts = [];
+    const now = Date.now();
+
+    reminders.forEach((rem) => {
+      if (rem.is_completed) return;
+
+      let targetTime = null;
+      if (rem.schedule_time) {
+        let parsed = new Date(rem.schedule_time);
+        if (isNaN(parsed.getTime())) {
+          parsed = new Date(rem.schedule_time.replace(' ', 'T'));
+        }
+        if (!isNaN(parsed.getTime())) {
+          targetTime = parsed.getTime();
+        } else {
+          const today = new Date().toISOString().split('T')[0];
+          parsed = new Date(`${today} ${rem.schedule_time}`);
+          if (!isNaN(parsed.getTime())) {
+            targetTime = parsed.getTime();
+          }
+        }
+      }
+
+      if (targetTime) {
+        const delay = targetTime - now;
+        if (delay > 0 && delay < 7 * 24 * 60 * 60 * 1000) {
+          const timeoutId = setTimeout(() => {
+            if (Notification.permission === 'granted') {
+              const typeLabel = rem.type === 'follow_up' 
+                ? t('dashboard.followUpReminder') 
+                : t('dashboard.medicineReminder');
+              new Notification(`${typeLabel}: ${rem.title}`, {
+                body: rem.schedule_time,
+                icon: '/favicon.ico'
+              });
+            }
+          }, delay);
+          timeouts.push(timeoutId);
+        }
+      }
+    });
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
+  }, [reminders, t]);
+
   const handleToggleReminder = async (id) => {
     try {
       await api.toggleReminder(id);
       setReminders(prev => prev.map(r => r.id === id ? { ...r, is_completed: r.is_completed ? 0 : 1 } : r));
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleAddReminder = async (e) => {
+    e.preventDefault();
+    if (!newReminderText.trim() || !newReminderDate || !newReminderTime) return;
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (err) {
+        console.error('Notification permission error:', err);
+      }
+    }
+
+    setAddingReminder(true);
+    try {
+      const schedule_time = `${newReminderDate} ${newReminderTime}`;
+      const created = await api.addReminder({
+        type: newReminderType,
+        title: newReminderText.trim(),
+        schedule_time
+      });
+      setReminders(prev => [...prev, created]);
+      setNewReminderText('');
+      setShowAddReminder(false);
+    } catch (err) {
+      console.error('Failed to add reminder:', err);
+      alert(err.message || 'Failed to add reminder');
+    } finally {
+      setAddingReminder(false);
+    }
+  };
+
+  const handleDeleteReminder = async (e, id) => {
+    e.stopPropagation();
+    try {
+      await api.deleteReminder(id);
+      setReminders(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      console.error('Failed to delete reminder:', err);
+      alert(err.message || 'Failed to delete reminder');
     }
   };
 
@@ -342,29 +443,159 @@ export default function Dashboard({
 
           {/* Daily Reminders Checklist (PRD 7.2 & 7.14) */}
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-amber-950 text-base flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-amber-600" />
-              <span>{t('dashboard.upcomingReminders')}</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-amber-950 text-base flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-amber-600" />
+                <span>{t('dashboard.upcomingReminders')}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission().catch(() => {});
+                  }
+                  setShowAddReminder(!showAddReminder);
+                }}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300/80 rounded-xl transition tap-target"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{t('dashboard.addReminder')}</span>
+              </button>
+            </div>
+
+            {showAddReminder && (
+              <form onSubmit={handleAddReminder} className="bg-white border border-amber-200 rounded-2xl p-4 space-y-3 shadow-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    {t('dashboard.reminderType')}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewReminderType('medicine')}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold border transition ${
+                        newReminderType === 'medicine'
+                          ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {t('dashboard.medicineReminder')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewReminderType('follow_up')}
+                      className={`py-1.5 px-3 rounded-xl text-xs font-bold border transition ${
+                        newReminderType === 'follow_up'
+                          ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {t('dashboard.followUpReminder')}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    {t('dashboard.reminderTitle')}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newReminderText}
+                    onChange={(e) => setNewReminderText(e.target.value)}
+                    placeholder={t('dashboard.reminderPlaceholder')}
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {t('dashboard.reminderDate')}
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={newReminderDate}
+                      onChange={(e) => setNewReminderDate(e.target.value)}
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {t('dashboard.reminderTime')}
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={newReminderTime}
+                      onChange={(e) => setNewReminderTime(e.target.value)}
+                      className="w-full text-xs px-2.5 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end space-x-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddReminder(false)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
+                  >
+                    {t('dashboard.cancelReminder')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={addingReminder}
+                    className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 transition shadow-xs flex items-center space-x-1"
+                  >
+                    {addingReminder && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{t('dashboard.saveReminder')}</span>
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className="space-y-2">
-              {reminders.map(rem => (
-                <div
-                  key={rem.id}
-                  onClick={() => handleToggleReminder(rem.id)}
-                  className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between text-xs tap-target ${
-                    rem.is_completed 
-                      ? 'bg-white/50 border-slate-200 text-slate-400 line-through' 
-                      : 'bg-white border-amber-200 text-slate-900 font-bold shadow-xs'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2.5">
-                    <CheckCircle2 className={`w-4 h-4 ${rem.is_completed ? 'text-emerald-500' : 'text-slate-300'}`} />
-                    <span>{rem.title}</span>
+              {reminders.length === 0 ? (
+                <p className="text-xs text-amber-800/80 italic py-2 text-center">
+                  {t('dashboard.noReminders')}
+                </p>
+              ) : (
+                reminders.map(rem => (
+                  <div
+                    key={rem.id}
+                    onClick={() => handleToggleReminder(rem.id)}
+                    className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between text-xs tap-target ${
+                      rem.is_completed 
+                        ? 'bg-white/50 border-slate-200 text-slate-400 line-through' 
+                        : 'bg-white border-amber-200 text-slate-900 font-bold shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                      <CheckCircle2 className={`w-4 h-4 flex-shrink-0 ${rem.is_completed ? 'text-emerald-500' : 'text-slate-300'}`} />
+                      <div className="truncate">
+                        <span className="block truncate">{rem.title}</span>
+                        <span className="text-[10px] text-amber-700 font-normal">
+                          {rem.type === 'follow_up' ? t('dashboard.followUpReminder') : t('dashboard.medicineReminder')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <span className="text-[11px] text-amber-800 font-semibold">{rem.schedule_time}</span>
+                      <button
+                        type="button"
+                        title={t('dashboard.deleteReminder')}
+                        aria-label={t('dashboard.deleteReminder')}
+                        onClick={(e) => handleDeleteReminder(e, rem.id)}
+                        className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-[11px] text-amber-800 font-semibold">{rem.schedule_time}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
