@@ -141,7 +141,7 @@ export default function TimelineView({ onExplain, onShare, onNavigateUpload }) {
               {t('timeline.title')}
             </span>
             <h2 className="text-lg sm:text-xl font-black">
-              {t(stats.yearsSpanned === 1 ? 'dashboard.summaryStripSingular' : 'dashboard.summaryStrip', {
+              {t(Number(stats.yearsSpanned) <= 1 ? 'dashboard.summaryStripSingular' : 'dashboard.summaryStrip', {
                 count: stats.totalRecords,
                 hospitals: stats.totalHospitals,
                 years: stats.yearsSpanned

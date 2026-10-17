@@ -22,8 +22,14 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const queryRef = useRef('');
   const recognitionRef = useRef(null);
   const isNavigatingRef = useRef(false);
+
+  // Keep queryRef synchronized
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
 
   // Initialize Speech Recognition if supported
   const startListening = () => {
@@ -43,8 +49,10 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
     try {
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
-      recognition.lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-IN';
-      recognition.interimResults = false;
+      const activeLang = language || 'en';
+      recognition.lang = activeLang === 'mr' ? 'mr-IN' : activeLang === 'hi' ? 'hi-IN' : 'en-IN';
+      recognition.interimResults = true;
+      recognition.continuous = false;
       recognition.maxAlternatives = 1;
 
       let recognizedTranscript = '';
@@ -56,6 +64,7 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
           transcript += event.results[i][0].transcript;
         }
         recognizedTranscript = transcript;
+        queryRef.current = transcript;
         setQuery(transcript);
       };
       recognition.onerror = (e) => {
@@ -64,9 +73,10 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
       };
       recognition.onend = () => {
         setIsListening(false);
-        // Automatically submit the recognized text after speech finishes
-        if (recognizedTranscript && recognizedTranscript.trim()) {
-          handleSendQuery(recognizedTranscript);
+        // Automatically submit the recognized text after speech finishes (Requirement 2)
+        const finalQuery = recognizedTranscript || queryRef.current;
+        if (finalQuery && finalQuery.trim()) {
+          handleSendQuery(finalQuery.trim());
         }
       };
 
@@ -78,37 +88,62 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   };
 
   const handleSendQuery = async (queryText) => {
-    const q = (queryText !== undefined && queryText !== null ? queryText : query);
+    const q = (queryText !== undefined && queryText !== null ? queryText : (queryRef.current || query));
     if (!q || !q.trim()) return;
 
+    const trimmed = q.trim();
+    setQuery(trimmed);
+    queryRef.current = trimmed;
     setIsLoading(true);
+
     try {
-      const res = await api.processVoiceCommand({ query: q.trim(), language });
+      const activeLang = language || 'en';
+      const res = await api.processVoiceCommand({ query: trimmed, language: activeLang });
       setResponse(res);
 
-      // Play audio response automatically in selected language
+      // Play audio response automatically in selected language (Requirement 4)
       if (window.speechSynthesis && res.answer) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(res.answer);
-        utterance.lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-US';
-        utterance.rate = 0.95;
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
-        window.speechSynthesis.speak(utterance);
+        try {
+          window.speechSynthesis.cancel();
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+          const utterance = new SpeechSynthesisUtterance(res.answer);
+          utterance.lang = activeLang === 'mr' ? 'mr-IN' : activeLang === 'hi' ? 'hi-IN' : 'en-US';
+          utterance.rate = 0.95;
+          utterance.onstart = () => setIsSpeaking(true);
+          utterance.onend = () => setIsSpeaking(false);
+          utterance.onerror = () => setIsSpeaking(false);
+          window.speechSynthesis.speak(utterance);
+        } catch (synthErr) {
+          console.warn('Speech synthesis error:', synthErr);
+        }
       }
 
-      // If action is to open emergency card
+      // If action is to open emergency card (Requirement 3)
       if (res.action === 'open_emergency' && onOpenEmergency) {
         isNavigatingRef.current = true;
         setTimeout(() => {
           onOpenEmergency();
-        }, 1200);
+        }, 1000);
       }
     } catch (err) {
       console.error('Failed to process voice query:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {}
+    }
+    const val = queryRef.current || query;
+    if (val && val.trim()) {
+      handleSendQuery(val.trim());
     }
   };
 
@@ -197,30 +232,33 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
             </div>
           </div>
 
-          {/* Text input alternative */}
-          <div className="flex items-center space-x-2">
+          {/* Text input alternative & send action (Requirement 1) */}
+          <form onSubmit={handleSubmit} className="flex items-center space-x-2">
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                queryRef.current = e.target.value;
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  handleSendQuery(query);
+                  handleSubmit(e);
                 }
               }}
               placeholder={t('voice.typePlaceholder')}
               className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
             <button
-              type="button"
-              onClick={() => handleSendQuery(query)}
-              disabled={isLoading || !query.trim()}
-              className="p-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl disabled:opacity-50 transition cursor-pointer"
+              type="submit"
+              disabled={isLoading || !(query && query.trim())}
+              aria-label="Send query"
+              className="p-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl disabled:opacity-50 transition cursor-pointer shadow-sm"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
-          </div>
+          </form>
 
           {/* Assistant Answer Box */}
           {response && (
