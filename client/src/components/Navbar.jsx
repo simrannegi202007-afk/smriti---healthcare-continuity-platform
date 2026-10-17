@@ -18,6 +18,7 @@ import {
   Pill, 
   Share2, 
   User, 
+  TrendingUp,
   ChevronDown, 
   LogIn 
 } from 'lucide-react';
@@ -87,6 +88,7 @@ export default function Navbar({
   const navItems = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: Activity },
     { id: 'timeline', label: t('nav.timeline'), icon: Clock },
+    { id: 'trends', label: t('nav.trends'), icon: TrendingUp },
     { id: 'upload', label: t('nav.upload'), icon: FileText },
     { id: 'medicines', label: t('nav.medicines'), icon: Pill },
     { id: 'share', label: t('nav.share'), icon: Share2 },

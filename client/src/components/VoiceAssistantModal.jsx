@@ -82,9 +82,9 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   };
 
   const sampleCommands = [
-    { text: language === 'mr' ? 'माझी आजची औषधे कोणती आहेत?' : language === 'hi' ? 'मेरी आज की दवाइयां कौन सी हैं?' : 'What medicines do I take today?' },
-    { text: language === 'mr' ? 'माझी ॲलर्जी काय आहे?' : language === 'hi' ? 'मुझे किस चीज़ से एलर्जी है?' : 'What are my recorded allergies?' },
-    { text: language === 'mr' ? 'माझा शेवटचा रिपोर्ट समजावून सांगा' : language === 'hi' ? 'मेरी पिछली रिपोर्ट समझाएं' : 'Explain my latest lab report' }
+    { text: t('voice.cmd1') },
+    { text: t('voice.cmd2') },
+    { text: t('voice.cmd3') }
   ];
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
             <div>
               <h2 className="text-lg font-bold">{t('voice.title')}</h2>
               <p className="text-xs text-amber-100">
-                {language === 'mr' ? 'मराठी व्हॉईस सहाय्यक' : language === 'hi' ? 'हिंदी वॉयस असिस्टेंट' : 'Multilingual Health Voice Assistant'}
+                {t('voice.subtitle')}
               </p>
             </div>
           </div>
@@ -136,14 +136,14 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
               {isListening ? t('voice.listening') : t('voice.prompt')}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              {language === 'mr' ? 'माईक दाबा आणि बोला' : language === 'hi' ? 'माइक दबाएं और बोलें' : 'Tap mic and speak'}
+              {t('voice.tapToSpeak')}
             </p>
           </div>
 
           {/* Quick Command Suggestions */}
           <div>
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-              वारंवार विचारले जाणारे प्रश्न:
+              {t('voice.frequentQuestions')}
             </span>
             <div className="flex flex-col space-y-1.5">
               {sampleCommands.map((cmd, i) => (
@@ -168,7 +168,7 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
-              placeholder="किंवा येथे टाइप करा..."
+              placeholder={t('voice.typePlaceholder')}
               className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
             <button
@@ -184,8 +184,8 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
           {response && (
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-4 space-y-3 animate-fadeIn">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-amber-900">🌿 स्मृती सहाय्यक उत्तर:</span>
-                {isSpeaking && <span className="text-amber-700 animate-pulse font-bold">🔊 बोलत आहे...</span>}
+                <span className="font-bold text-amber-900">🌿 {t('voice.assistantResponse')}</span>
+                {isSpeaking && <span className="text-amber-700 animate-pulse font-bold">🔊 {t('voice.speaking')}</span>}
               </div>
               <p className="text-sm font-semibold text-slate-900 leading-relaxed">
                 {response.answer}

@@ -133,7 +133,7 @@ export default function FilePreviewModal({ record, shareToken = null, onClose })
           {loading && (
             <div className="flex flex-col items-center space-y-3 text-slate-500">
               <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-              <span className="text-xs font-semibold">सुरक्षित दस्तऐवज उघडत आहे (Streaming protected file)...</span>
+              <span className="text-xs font-semibold">{t('preview.streaming')}</span>
             </div>
           )}
 
@@ -189,13 +189,13 @@ export default function FilePreviewModal({ record, shareToken = null, onClose })
         {/* Footer info */}
         <div className="px-6 py-3 bg-white border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span className="truncate">
-            फाईल: <strong>{fileName}</strong>
+            {t('timeline.fileLabel')}: <strong>{fileName}</strong>
           </span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition tap-target"
           >
-            बंद करा (Close)
+            {t('preview.close')}
           </button>
         </div>
 

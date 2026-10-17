@@ -84,7 +84,7 @@ export default function TrendCharts() {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {m.id}
+              {m.label}
             </button>
           ))}
         </div>
@@ -96,11 +96,11 @@ export default function TrendCharts() {
           <div className="flex items-center space-x-2 text-emerald-900 font-semibold">
             <CheckCircle className="w-4 h-4 text-emerald-600" />
             <span>
-              प्रगती: <strong>{firstVal} {currentMetricConfig.unit}</strong> (सुरुवात) → <strong>{lastVal} {currentMetricConfig.unit}</strong> (अलीकडील)
+              {t('trends.progress')}: <strong>{firstVal} {currentMetricConfig.unit}</strong> ({t('trends.start')}) → <strong>{lastVal} {currentMetricConfig.unit}</strong> ({t('trends.latest')})
             </span>
           </div>
           <span className="font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900 text-[11px]">
-            {isImproved ? 'सुधारणा (Optimal)' : 'स्थिर (Monitored)'}
+            {isImproved ? t('trends.improved') : t('trends.monitored')}
           </span>
         </div>
       )}
@@ -126,7 +126,7 @@ export default function TrendCharts() {
             fill="#0f766e"
             fontWeight="600"
           >
-            Normal Zone ({currentMetricConfig.normalMin}-{currentMetricConfig.normalMax} {currentMetricConfig.unit})
+            {t('trends.normalZone')} ({currentMetricConfig.normalMin}-{currentMetricConfig.normalMax} {currentMetricConfig.unit})
           </text>
 
           {/* Grid lines */}

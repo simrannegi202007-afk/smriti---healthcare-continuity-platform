@@ -26,15 +26,15 @@ export default function DuplicateWarningModal({ duplicateInfo, onProceed, onCanc
         {duplicateInfo?.existingRecord && (
           <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-3 text-xs mb-6 space-y-1">
             <div className="flex justify-between text-slate-700">
-              <span className="font-semibold">रुग्णालय (Hospital):</span>
+              <span className="font-semibold">{t('upload.hospital')}:</span>
               <span className="font-bold">{duplicateInfo.existingRecord.hospital}</span>
             </div>
             <div className="flex justify-between text-slate-700">
-              <span className="font-semibold">तारीख (Date):</span>
+              <span className="font-semibold">{t('upload.date')}:</span>
               <span className="font-bold">{duplicateInfo.existingRecord.date}</span>
             </div>
             <div className="flex justify-between text-slate-700">
-              <span className="font-semibold">प्रकार (Category):</span>
+              <span className="font-semibold">{t('upload.category')}:</span>
               <span className="font-bold">{duplicateInfo.existingRecord.category}</span>
             </div>
           </div>

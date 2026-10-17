@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import SimpleModeHome from './components/SimpleModeHome';
@@ -14,10 +15,12 @@ import Dashboard from './pages/Dashboard';
 import UploadPage from './pages/UploadPage';
 import MedicinesPage from './pages/MedicinesPage';
 import AccessLogPage from './pages/AccessLogPage';
+import TrendCharts from './components/TrendCharts';
 import DoctorSummaryView from './pages/DoctorSummaryView';
 import EmergencyPublicView from './pages/EmergencyPublicView';
 
 function MainApp() {
+  const { t } = useTranslation();
   const { simpleMode, toggleSimpleMode } = useAuth();
   
   // Navigation tab: 'dashboard', 'timeline', 'upload', 'medicines', 'share', 'access-log'
@@ -90,6 +93,8 @@ function MainApp() {
           />
         ) : activeTab === 'medicines' ? (
           <MedicinesPage />
+        ) : activeTab === 'trends' ? (
+          <div className="max-w-4xl mx-auto px-4 py-8"><TrendCharts /></div>
         ) : activeTab === 'share' ? (
           <DoctorShareModal records={[]} onClose={() => setActiveTab('dashboard')} />
         ) : activeTab === 'access-log' ? (
@@ -108,10 +113,10 @@ function MainApp() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
         <p className="font-semibold text-slate-700">
-          🌿 Smriti (स्मृती / स्मृति) — Healthcare Continuity Platform for India
+          🌿 {t('app.name')} — {t('app.subtagline')}
         </p>
         <p className="text-[11px] text-slate-400 mt-1">
-          "Your health, remembered." • ABHA Identity Layer Complement • Multilingual English, Hindi & Marathi
+          "{t('app.tagline')}" • ABHA Identity Layer Complement • Multilingual English, Hindi & Marathi
         </p>
       </footer>
 

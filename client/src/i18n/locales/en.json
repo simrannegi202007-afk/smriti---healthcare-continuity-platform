@@ -14,6 +14,7 @@
     "medicines": "Medicines & Rx",
     "emergency": "Emergency Card",
     "share": "Doctor Sharing",
+    "trends": "Trends",
     "accessLog": "Access Log",
     "settings": "Settings",
     "simpleMode": "Simple View",
@@ -78,15 +79,19 @@
     "extractedParameters": "Extracted Test Parameters",
     "notesLabel": "Clinical & Patient Notes",
     "fileLabel": "File",
-    "delete": "Delete"
+    "delete": "Delete",
+    "loading": "Loading medical timeline..."
   },
   "upload": {
     "title": "Upload Medical Document",
     "medicineDetails": "Prescription Medicine Details (Optional)",
     "medName": "Medicine Name",
+    "medNamePlaceholder": "e.g. Metformin 500mg or Glimepiride",
     "medDose": "Dose (e.g. 500mg)",
+    "medDosePlaceholder": "e.g. 500 mg / 1 tablet",
     "medFreq": "Frequency",
     "medDuration": "Duration (e.g. 30 days)",
+    "medDurationPlaceholder": "e.g. 30 days, 90 days, or Ongoing",
     "addToActiveMeds": "Automatically add to Currently Taking medicines list",
     "dragDrop": "Drag & drop PDF or photo here, or click to browse",
     "fileSelected": "Selected file: {{name}} ({{size}} KB)",
@@ -220,10 +225,21 @@
     "title": "Health Trends Over Time",
     "subtitle": "Track key biomarkers across hospital visits",
     "selectMetric": "Choose Biomarker:",
-    "hba1c": "HbA1c %",
+    "hba1c": "HbA1c",
     "hemoglobin": "Hemoglobin",
     "fbs": "Fasting Blood Sugar",
-    "targetRange": "Target Normal Range"
+    "targetRange": "Target Normal Range",
+    "progress": "Progress",
+    "start": "start",
+    "latest": "latest",
+    "improved": "Improved",
+    "monitored": "Stable",
+    "normalZone": "Normal Zone"
+  },
+  "preview": {
+    "title": "Medical Document Preview",
+    "streaming": "Opening protected document (Streaming protected file)...",
+    "close": "Close"
   },
   "accessLog": {
     "title": "Who Accessed My Data",
@@ -362,7 +378,16 @@
     "title": "Smriti Voice Assistant",
     "listening": "Listening... Speak now",
     "prompt": "Tap to speak in English, Hindi, or Marathi",
-    "commands": "Try saying: 'What medicines do I take today?', 'Show my allergies', 'Explain my latest report'"
+    "commands": "Try saying: 'What medicines do I take today?', 'Show my allergies', 'Explain my latest report'",
+    "subtitle": "Multilingual Health Voice Assistant",
+    "tapToSpeak": "Tap mic and speak",
+    "frequentQuestions": "Frequently Asked Questions:",
+    "typePlaceholder": "Or type here...",
+    "assistantResponse": "Smriti Assistant Response:",
+    "speaking": "Speaking...",
+    "cmd1": "What medicines do I take today?",
+    "cmd2": "What are my recorded allergies?",
+    "cmd3": "Explain my latest lab report"
   },
   "auth": {
     "loginTab": "Sign In",

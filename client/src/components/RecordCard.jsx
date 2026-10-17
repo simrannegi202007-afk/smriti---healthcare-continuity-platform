@@ -186,7 +186,7 @@ export default function RecordCard({
           {record.lab_values && record.lab_values.length > 0 && (
             <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-2">
               <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">
-                घटक आणि मूल्ये (Extracted Test Parameters):
+                {t('timeline.extractedParameters')}:
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {record.lab_values.map((lv, i) => (
@@ -210,7 +210,7 @@ export default function RecordCard({
           {/* Notes */}
           {record.notes && (
             <div className="p-3 bg-white rounded-xl border border-slate-200 text-slate-600">
-              <span className="font-bold text-slate-700 block mb-0.5">टीप (Clinical / Patient Notes):</span>
+              <span className="font-bold text-slate-700 block mb-0.5">{t('timeline.notesLabel')}:</span>
               <p>{record.notes}</p>
             </div>
           )}
@@ -219,7 +219,7 @@ export default function RecordCard({
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center space-x-2 text-slate-500">
               <FileText className="w-4 h-4" />
-              <span>फाईल: <strong>{record.file_name || 'Digitized Record'}</strong></span>
+              <span>{t('timeline.fileLabel')}: <strong>{record.file_name || 'Digitized Record'}</strong></span>
             </div>
 
             <div className="flex items-center space-x-2">

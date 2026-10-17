@@ -290,7 +290,7 @@ export default function UploadPage({ onUploadSuccess }) {
               type="text"
               value={hospital}
               onChange={(e) => setHospital(e.target.value)}
-              placeholder="उदा. K.E.M. Hospital, Mumbai किंवा Lilavati Hospital"
+              placeholder={t('upload.hospitalPlaceholder')}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500"
             />
           </div>
@@ -302,7 +302,7 @@ export default function UploadPage({ onUploadSuccess }) {
               type="text"
               value={doctor}
               onChange={(e) => setDoctor(e.target.value)}
-              placeholder="उदा. Dr. Arvind Patil (Endocrinologist)"
+              placeholder={t('upload.doctorPlaceholder')}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500"
             />
           </div>
@@ -336,7 +336,7 @@ export default function UploadPage({ onUploadSuccess }) {
                       type="text"
                       value={medName}
                       onChange={(e) => setMedName(e.target.value)}
-                      placeholder="उदा. Metformin 500mg किंवा Glimepiride"
+                      placeholder={t('upload.medNamePlaceholder')}
                       className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
                     />
                   </div>
@@ -349,7 +349,7 @@ export default function UploadPage({ onUploadSuccess }) {
                       type="text"
                       value={medDose}
                       onChange={(e) => setMedDose(e.target.value)}
-                      placeholder="उदा. 500 mg / 1 गोळी"
+                      placeholder={t('upload.medDosePlaceholder')}
                       className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
                     />
                   </div>
@@ -378,7 +378,7 @@ export default function UploadPage({ onUploadSuccess }) {
                       type="text"
                       value={medDuration}
                       onChange={(e) => setMedDuration(e.target.value)}
-                      placeholder="उदा. 30 days, 90 days, किंवा Ongoing"
+                      placeholder={t('upload.medDurationPlaceholder')}
                       className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-800"
                     />
                   </div>
@@ -394,7 +394,7 @@ export default function UploadPage({ onUploadSuccess }) {
               rows="2"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="महिनाभरानंतर फॉलो-अप, औषध बदल किंवा लक्षणे..."
+              placeholder={t('upload.notesPlaceholder')}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-teal-500"
             ></textarea>
           </div>
@@ -418,7 +418,7 @@ export default function UploadPage({ onUploadSuccess }) {
         {/* Security notice */}
         <div className="flex items-center space-x-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
           <ShieldCheck className="w-4 h-4 text-teal-600 flex-shrink-0" />
-          <span>सुरक्षित स्टोरेज: तुमचे वैद्यकीय दस्तऐवज सार्वजनिकरित्या उपलब्ध नसतात (Private streaming only).</span>
+          <span>{t('upload.secureStorage')}</span>
         </div>
 
         {/* Submit Button */}

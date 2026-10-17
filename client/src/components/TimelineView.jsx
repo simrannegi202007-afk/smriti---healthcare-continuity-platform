@@ -255,7 +255,7 @@ export default function TimelineView({ onExplain, onShare, onNavigateUpload }) {
       {loading ? (
         <div className="py-16 flex flex-col items-center justify-center text-slate-400 space-y-2">
           <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-          <span className="text-xs font-medium">इतिहास लोड होत आहे...</span>
+          <span className="text-xs font-medium">{t('timeline.loading')}</span>
         </div>
       ) : records.length === 0 ? (
         <div className="text-center py-16 bg-white border border-slate-200 rounded-3xl p-8 space-y-4 shadow-sm">
