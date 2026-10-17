@@ -161,9 +161,10 @@ export default function EmergencyPublicView({ token }) {
               <a
                 href={`tel:${data.emergencyContact.phone}`}
                 className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs flex items-center space-x-1.5 shadow-lg transition tap-target"
+                aria-label={t('dashboard.call', 'Call')}
               >
                 <Phone className="w-4 h-4" />
-                <span>SOS</span>
+                <span>{t('dashboard.call', 'Call')}</span>
               </a>
             </div>
           )}

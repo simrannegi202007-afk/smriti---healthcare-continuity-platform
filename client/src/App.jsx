@@ -45,7 +45,7 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans w-full max-w-full">
       {/* Top Navigation with Smriti Brand & Tagline */}
       <Navbar
         activeTab={activeTab}
@@ -57,7 +57,7 @@ function MainApp() {
       />
 
       {/* Main Page Content */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-16 w-full max-w-full overflow-x-hidden">
         {simpleMode && activeTab === 'dashboard' ? (
           <SimpleModeHome
             onNavigate={(tab) => {

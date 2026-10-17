@@ -81,7 +81,7 @@ export default function RecordCard({
       {record.is_key_moment === 1 && (
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-bold px-4 py-1 flex items-center space-x-1.5">
           <Star className="w-3.5 h-3.5 fill-white" />
-          <span>{t('timeline.keyMoment')} (महत्त्वपूर्ण घटना)</span>
+          <span>{t('timeline.keyMoment')}</span>
         </div>
       )}
 

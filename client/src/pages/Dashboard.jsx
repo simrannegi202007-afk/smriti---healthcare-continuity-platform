@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import TrendCharts from '../components/TrendCharts';
 import RecordCard from '../components/RecordCard';
 import FilePreviewModal from '../components/FilePreviewModal';
+import { getMedicineTimingLabel, getMedicineFrequencyLabel } from '../utils/medicineUtils';
 import { 
   UploadCloud, 
   Share2, 
@@ -298,9 +299,10 @@ export default function Dashboard({
               <a
                 href={`tel:${profile?.emergency_contact_phone || '+919820112345'}`}
                 className="flex items-center space-x-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-xs transition tap-target"
+                aria-label={t('dashboard.call')}
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>Call</span>
+                <span>{t('dashboard.call')}</span>
               </a>
             </div>
 
@@ -317,7 +319,7 @@ export default function Dashboard({
                 onClick={() => onNavigate('medicines')}
                 className="text-xs text-teal-700 font-bold hover:underline"
               >
-                View all
+                {t('dashboard.viewAllMeds')}
               </button>
             </div>
 
@@ -330,7 +332,9 @@ export default function Dashboard({
                       {med.dose}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium">{med.frequency} • {med.timing}</p>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {getMedicineFrequencyLabel(med.frequency, t)} • {getMedicineTimingLabel(med.timing, t)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -340,7 +344,7 @@ export default function Dashboard({
           <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-6 shadow-sm space-y-4">
             <h3 className="font-bold text-amber-950 text-base flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-amber-600" />
-              <span>Upcoming Reminders</span>
+              <span>{t('dashboard.upcomingReminders')}</span>
             </h3>
 
             <div className="space-y-2">

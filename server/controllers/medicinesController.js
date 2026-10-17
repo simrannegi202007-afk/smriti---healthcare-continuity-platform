@@ -29,7 +29,7 @@ function addMedicine(req, res) {
       name,
       dose,
       frequency || 'Once daily',
-      timing || 'After meals',
+      timing || 'AFTER_MEALS',
       start_date || new Date().toISOString().split('T')[0],
       duration || 'Ongoing',
       notes || ''

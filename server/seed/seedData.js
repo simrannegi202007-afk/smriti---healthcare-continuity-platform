@@ -229,9 +229,9 @@ function seedDatabase() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertMed.run(userId, 'Metformin Hydrochloride', '500 mg', 'Twice daily (1-0-1)', 'After meals (सकाळी आणि रात्री जेवणानंतर)', '2024-01-14', 'Ongoing / Long-term', null, 1, 9, 'For diabetes glycemic control');
-  insertMed.run(userId, 'Telmisartan', '40 mg', 'Once daily (1-0-0)', 'Morning before breakfast (सकाळी नाश्त्यापूर्वी)', '2024-05-18', 'Ongoing / Long-term', null, 1, 9, 'For blood pressure management');
-  insertMed.run(userId, 'Calcium Carbonate + Vitamin D3', '500 mg + 250 IU', 'Once daily (0-1-0)', 'After lunch (दुपारी जेवणानंतर)', '2024-09-22', '90 days', null, 1, 9, 'For knee osteoarthritis bone density');
+  insertMed.run(userId, 'Metformin Hydrochloride', '500 mg', 'Twice daily (1-0-1)', 'AFTER_MEALS', '2024-01-14', 'Ongoing / Long-term', null, 1, 9, 'For diabetes glycemic control');
+  insertMed.run(userId, 'Telmisartan', '40 mg', 'Once daily (1-0-0)', 'BEFORE_BREAKFAST', '2024-05-18', 'Ongoing / Long-term', null, 1, 9, 'For blood pressure management');
+  insertMed.run(userId, 'Calcium Carbonate + Vitamin D3', '500 mg + 250 IU', 'Once daily (0-1-0)', 'AFTER_LUNCH', '2024-09-22', '90 days', null, 1, 9, 'For knee osteoarthritis bone density');
 
   // 6. Insert Reminders
   const insertReminder = db.prepare(`

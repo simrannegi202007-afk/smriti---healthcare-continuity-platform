@@ -259,7 +259,7 @@ function uploadRecord(req, res) {
           medName,
           medicine_dose || 'Standard dose',
           medicine_frequency || 'Once daily',
-          medicine_timing || 'After meals',
+          medicine_timing || 'AFTER_MEALS',
           date,
           medicine_duration || '30 days',
           newRecordId,

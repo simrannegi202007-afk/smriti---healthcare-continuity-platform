@@ -329,9 +329,10 @@ export default function EmergencyCardModal({ onClose }) {
                     <a
                       href={`tel:${profile?.emergency_contact_phone || '+919820112345'}`}
                       className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-xl shadow-xs hover:bg-emerald-700 transition"
+                      aria-label={t('dashboard.call')}
                     >
                       <Phone className="w-3.5 h-3.5" />
-                      <span>SOS</span>
+                      <span>{t('dashboard.call')}</span>
                     </a>
                   </div>
                 )}

@@ -409,7 +409,7 @@ export default function UploadPage({ onUploadSuccess }) {
               className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
             />
             <label htmlFor="keyMomentCheck" className="text-xs font-bold text-amber-900 cursor-pointer">
-              महत्त्वपूर्ण घटना म्हणून चिन्हांकित करा (Key Moment - Surgery / Major Diagnosis / Admission)
+              {t('upload.markKeyMoment')}
             </label>
           </div>
 
