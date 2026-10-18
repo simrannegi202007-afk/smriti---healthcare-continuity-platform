@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTTS } from '../utils/useTTS';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -14,6 +15,8 @@ import {
   ChevronUp, 
   ExternalLink,
   Volume2,
+  VolumeX,
+  Loader2,
   Calendar,
   Building2,
   User,
@@ -56,6 +59,7 @@ export default function RecordCard({
   const { t } = useTranslation();
   const { language } = useAuth();
   const [expanded, setExpanded] = useState(false);
+  const { speak, stop, isSpeaking, isLoading: ttsLoading, fallbackUsed } = useTTS();
 
   const meta = categoryMeta[record.category] || categoryMeta['Other'];
   const Icon = meta.icon;
@@ -63,12 +67,9 @@ export default function RecordCard({
 
   const handleReadAloud = (e) => {
     e.stopPropagation();
-    if (!window.speechSynthesis) return;
-    const utterance = new SpeechSynthesisUtterance(
-      `${record.date}, ${record.hospital}. ${record.category}. ${record.ai_summary}`
-    );
-    utterance.lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-US';
-    window.speechSynthesis.speak(utterance);
+    const textToRead = `${record.date}, ${record.hospital}. ${record.category}. ${record.ai_summary || ''}`;
+    const lang = language === 'mr' ? 'mr-IN' : language === 'hi' ? 'hi-IN' : 'en-IN';
+    speak(textToRead, lang);
   };
 
   return (
@@ -133,14 +134,27 @@ export default function RecordCard({
 
         {/* Action Controls */}
         <div className="flex items-center space-x-2 self-end sm:self-center">
-          {/* Read Aloud button in simple mode */}
+          {/* Read Aloud button (Gemini TTS) */}
           <button
             onClick={handleReadAloud}
-            title={t('timeline.readAloud')}
-            className="p-2 rounded-xl text-slate-500 hover:text-teal-700 hover:bg-teal-50 border border-slate-200 transition"
+            title={isSpeaking ? 'Stop' : t('timeline.readAloud')}
+            className={`p-2 rounded-xl border transition ${
+              isSpeaking
+                ? 'bg-red-50 text-red-600 border-red-200'
+                : 'text-slate-500 hover:text-teal-700 hover:bg-teal-50 border-slate-200'
+            }`}
           >
-            <Volume2 className="w-4 h-4" />
+            {ttsLoading
+              ? <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+              : isSpeaking
+              ? <VolumeX className="w-4 h-4 animate-pulse" />
+              : <Volume2 className="w-4 h-4" />}
           </button>
+          {fallbackUsed && (
+            <span className="text-[10px] text-amber-600 font-semibold px-1.5 py-0.5 bg-amber-50 border border-amber-200 rounded-full">
+              Browser voice
+            </span>
+          )}
 
           {/* AI Explain button if lab report */}
           {record.category === 'Lab report' && (

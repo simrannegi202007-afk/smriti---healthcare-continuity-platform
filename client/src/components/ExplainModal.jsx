@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTTS } from '../utils/useTTS';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -118,7 +119,9 @@ export default function ExplainModal({ record, onClose }) {
   const [explaining, setExplaining] = useState(false);
   const [extractedValues, setExtractedValues] = useState([]);
   const [explanationData, setExplanationData] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { speak, stop, isSpeaking, isLoading: ttsLoading, fallbackUsed } = useTTS();
+
+  const isTTSActive = isSpeaking || ttsLoading;
 
   const txt = UI_TEXT[selectedLang] || UI_TEXT.en;
 
@@ -237,37 +240,21 @@ export default function ExplainModal({ record, onClose }) {
   const handleSwitchLanguage = async (newLang) => {
     setSelectedLang(newLang);
     if (step === 2) {
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+      stop();
       await handleGenerateExplanation(newLang);
     }
   };
 
-  // Speech synthesis read aloud
+  // TTS read aloud – calls /api/tts via the useTTS hook
   const handleToggleSpeech = () => {
-    if (!window.speechSynthesis || !explanationData) return;
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      const textToRead = `${explanationData.explanation}. ${explanationData.disclaimer}`;
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.lang = selectedLang === 'mr' ? 'mr-IN' : selectedLang === 'hi' ? 'hi-IN' : 'en-US';
-      utterance.rate = 0.88;
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-      setIsSpeaking(true);
-    }
+    if (!explanationData) return;
+    const textToRead = `${explanationData.explanation}. ${explanationData.disclaimer || ''}`;
+    const lang = selectedLang === 'mr' ? 'mr-IN' : selectedLang === 'hi' ? 'hi-IN' : 'en-IN';
+    speak(textToRead, lang);
   };
 
   useEffect(() => {
-    return () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    };
+    return () => { stop(); };
   }, []);
 
   const languagesList = [
@@ -631,17 +618,23 @@ export default function ExplainModal({ record, onClose }) {
                 </div>
               </div>
 
-              {/* Audio Read Aloud Button */}
+              {/* Audio Read Aloud Button (Gemini TTS) */}
               <button
                 type="button"
                 onClick={handleToggleSpeech}
-                className={`w-full py-3.5 px-4 rounded-2xl border-2 flex items-center justify-center space-x-2 font-bold text-sm transition tap-target ${
-                  isSpeaking 
-                    ? 'bg-red-50 text-red-700 border-red-300 shadow-sm' 
+                disabled={ttsLoading}
+                className={`w-full py-3.5 px-4 rounded-2xl border-2 flex items-center justify-center space-x-2 font-bold text-sm transition tap-target disabled:opacity-70 ${
+                  isTTSActive
+                    ? 'bg-red-50 text-red-700 border-red-300 shadow-sm'
                     : 'bg-white hover:bg-teal-50 text-teal-900 border-teal-300 shadow-sm'
                 }`}
               >
-                {isSpeaking ? (
+                {ttsLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
+                    <span>Generating audio…</span>
+                  </>
+                ) : isSpeaking ? (
                   <>
                     <VolumeX className="w-5 h-5 text-red-600 animate-pulse" />
                     <span>{txt.stopVoice}</span>
@@ -653,6 +646,11 @@ export default function ExplainModal({ record, onClose }) {
                   </>
                 )}
               </button>
+              {fallbackUsed && (
+                <p className="text-center text-[11px] text-amber-700 font-semibold bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5">
+                  ⚠️ Using browser voice (Gemini TTS unavailable for this device)
+                </p>
+              )}
 
               {/* Bottom Navigation Buttons */}
               <div className="flex space-x-3 pt-2">

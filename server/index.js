@@ -12,6 +12,7 @@ const shareRoutes = require('./routes/shareRoutes');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const medicineRoutes = require('./routes/medicineRoutes');
 const accessLogRoutes = require('./routes/accessLogRoutes');
+const ttsRoutes = require('./routes/ttsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/share', shareRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/access-logs', accessLogRoutes);
+app.use('/api/tts', ttsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

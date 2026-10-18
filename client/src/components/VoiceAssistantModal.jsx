@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTTS } from '../utils/useTTS';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,7 +22,7 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { speak: ttsSpeak, stop: ttsStop, isSpeaking, isLoading: ttsLoading, fallbackUsed } = useTTS();
   const queryRef = useRef('');
   const recognitionRef = useRef(null);
   const isNavigatingRef = useRef(false);
@@ -101,23 +102,10 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
       const res = await api.processVoiceCommand({ query: trimmed, language: activeLang });
       setResponse(res);
 
-      // Play audio response automatically in selected language (Requirement 4)
-      if (window.speechSynthesis && res.answer) {
-        try {
-          window.speechSynthesis.cancel();
-          if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-          }
-          const utterance = new SpeechSynthesisUtterance(res.answer);
-          utterance.lang = activeLang === 'mr' ? 'mr-IN' : activeLang === 'hi' ? 'hi-IN' : 'en-US';
-          utterance.rate = 0.95;
-          utterance.onstart = () => setIsSpeaking(true);
-          utterance.onend = () => setIsSpeaking(false);
-          utterance.onerror = () => setIsSpeaking(false);
-          window.speechSynthesis.speak(utterance);
-        } catch (synthErr) {
-          console.warn('Speech synthesis error:', synthErr);
-        }
+      // Auto-play response via Gemini TTS
+      if (res.answer) {
+        const lang = activeLang === 'mr' ? 'mr-IN' : activeLang === 'hi' ? 'hi-IN' : 'en-IN';
+        ttsSpeak(res.answer, lang);
       }
 
       // If action is to open emergency card (Requirement 3)
@@ -160,9 +148,7 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
           recognitionRef.current.abort();
         } catch (e) {}
       }
-      if (!isNavigatingRef.current && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      ttsStop();
     };
   }, []);
 
@@ -265,7 +251,37 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-2xl p-4 space-y-3 animate-fadeIn">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-amber-900">🌿 {t('voice.assistantResponse')}</span>
-                {isSpeaking && <span className="text-amber-700 animate-pulse font-bold">🔊 {t('voice.speaking')}</span>}
+                <div className="flex items-center space-x-2">
+                  {ttsLoading && (
+                    <span className="text-amber-700 animate-pulse font-bold flex items-center space-x-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Generating audio…</span>
+                    </span>
+                  )}
+                  {isSpeaking && !ttsLoading && (
+                    <button
+                      onClick={() => ttsStop()}
+                      className="text-amber-700 animate-pulse font-bold flex items-center space-x-1 hover:text-red-700 transition"
+                    >
+                      <VolumeX className="w-3.5 h-3.5" />
+                      <span>{t('voice.speaking')}</span>
+                    </button>
+                  )}
+                  {!ttsLoading && !isSpeaking && response.answer && (
+                    <button
+                      onClick={() => {
+                        const activeLang = language || 'en';
+                        const lang = activeLang === 'mr' ? 'mr-IN' : activeLang === 'hi' ? 'hi-IN' : 'en-IN';
+                        ttsSpeak(response.answer, lang);
+                      }}
+                      className="text-amber-600 hover:text-amber-800 font-bold flex items-center space-x-1 transition"
+                      title="Read aloud"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span className="text-[10px]">{t('chatbot.readAloud')}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="text-sm font-semibold text-slate-900 leading-relaxed">
                 {response.answer}
@@ -274,6 +290,11 @@ export default function VoiceAssistantModal({ onClose, onOpenEmergency }) {
                 <div className="text-[11px] text-red-800 bg-red-100/60 p-2 rounded-lg border border-red-200">
                   {response.disclaimer}
                 </div>
+              )}
+              {fallbackUsed && (
+                <p className="text-[10px] text-amber-700 font-semibold bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+                  ⚠️ Using browser voice (Gemini TTS unavailable)
+                </p>
               )}
             </div>
           )}

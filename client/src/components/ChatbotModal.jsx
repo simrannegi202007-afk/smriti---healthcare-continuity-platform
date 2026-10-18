@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTTS } from '../utils/useTTS';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +34,9 @@ export default function ChatbotModal({ onClose, onOpenEmergency }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [speakingId, setSpeakingId] = useState(null);
+  // Single shared TTS instance for all message read-aloud buttons
+  const { speak: ttsSpeak, stop: ttsStop, isSpeaking: ttsSpeaking, isLoading: ttsLoading, fallbackUsed } = useTTS();
+  const [activeTtsMsgId, setActiveTtsMsgId] = useState(null);
 
   const inputRef = useRef('');
   const recognitionRef = useRef(null);
@@ -57,9 +60,7 @@ export default function ChatbotModal({ onClose, onOpenEmergency }) {
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch (e) {}
       }
-      if (!isNavigatingRef.current && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      ttsStop();
     };
   }, []);
 
@@ -77,17 +78,6 @@ export default function ChatbotModal({ onClose, onOpenEmergency }) {
         t('chatbot.chip4En')
       ];
 
-  const speak = useCallback((text, msgId) => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = chatLang === 'hi' ? 'hi-IN' : 'en-IN';
-    utterance.rate = 0.92;
-    utterance.onstart = () => setSpeakingId(msgId);
-    utterance.onend = () => setSpeakingId(null);
-    utterance.onerror = () => setSpeakingId(null);
-    window.speechSynthesis.speak(utterance);
-  }, [chatLang]);
 
   const addMessage = (role, text) => {
     const id = `msg-${Date.now()}-${Math.random()}`;
@@ -258,18 +248,28 @@ export default function ChatbotModal({ onClose, onOpenEmergency }) {
                 {msg.role === 'assistant' && (
                   <button
                     onClick={() => {
-                      if (speakingId === msg.id) {
-                        window.speechSynthesis?.cancel();
-                        setSpeakingId(null);
+                      const lang = chatLang === 'hi' ? 'hi-IN' : 'en-IN';
+                      if (ttsSpeaking && activeTtsMsgId === msg.id) {
+                        ttsStop();
+                        setActiveTtsMsgId(null);
                       } else {
-                        speak(msg.text, msg.id);
+                        setActiveTtsMsgId(msg.id);
+                        ttsSpeak(msg.text, lang);
                       }
                     }}
                     className="mt-0.5 ml-1 text-[10px] text-slate-400 hover:text-emerald-600 flex items-center space-x-0.5 transition"
                     title={t('chatbot.readAloud')}
                   >
-                    <Volume2 className={`w-3 h-3 ${speakingId === msg.id ? 'text-emerald-500 animate-pulse' : ''}`} />
-                    <span>{speakingId === msg.id ? t('chatbot.speaking') : t('chatbot.readAloud')}</span>
+                    {ttsLoading && activeTtsMsgId === msg.id
+                      ? <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
+                      : <Volume2 className={`w-3 h-3 ${ttsSpeaking && activeTtsMsgId === msg.id ? 'text-emerald-500 animate-pulse' : ''}`} />}
+                    <span>
+                      {ttsLoading && activeTtsMsgId === msg.id
+                        ? 'Generating…'
+                        : ttsSpeaking && activeTtsMsgId === msg.id
+                        ? t('chatbot.speaking')
+                        : t('chatbot.readAloud')}
+                    </span>
                   </button>
                 )}
               </div>
