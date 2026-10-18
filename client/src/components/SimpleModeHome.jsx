@@ -12,7 +12,8 @@ import {
   Heart,
   Droplet,
   ShieldAlert,
-  Edit2
+  Edit2,
+  Bot
 } from 'lucide-react';
 
 export default function SimpleModeHome({ 
@@ -65,9 +66,9 @@ export default function SimpleModeHome({
     },
     {
       id: 'voice',
-      title: t('simpleMode.assistantTitle'),
-      desc: t('simpleMode.assistantDesc'),
-      icon: Mic,
+      title: t('chatbot.title'),
+      desc: t('chatbot.subtitle'),
+      icon: Bot,
       color: 'from-amber-500 to-orange-600',
       bgColor: 'bg-amber-50/80',
       borderColor: 'border-amber-300',

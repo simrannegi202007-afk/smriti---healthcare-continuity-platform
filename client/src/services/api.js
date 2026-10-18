@@ -73,10 +73,11 @@ export const api = {
   deleteRecord: (id) => request(`/records/${id}`, { method: 'DELETE' }),
   getTrends: (testName) => request(`/records/trends?testName=${encodeURIComponent(testName || 'HbA1c')}`),
 
-  // AI Simplifier & Voice
+  // AI Simplifier, Voice & Chat
   extractReportValues: (recordId) => request('/ai/extract', { method: 'POST', body: JSON.stringify({ recordId }) }),
   explainReport: (data) => request('/ai/explain', { method: 'POST', body: JSON.stringify(data) }),
   processVoiceCommand: (data) => request('/ai/voice-command', { method: 'POST', body: JSON.stringify(data) }),
+  chatMessage: (data) => request('/ai/chat', { method: 'POST', body: JSON.stringify(data) }),
 
   // Doctor Sharing
   createShareLink: (data) => request('/share/create', { method: 'POST', body: JSON.stringify(data) }),

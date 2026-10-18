@@ -6,5 +6,6 @@ const { authenticate } = require('../middleware/authMiddleware');
 router.post('/extract', authenticate, aiController.extractReportValues);
 router.post('/explain', authenticate, aiController.explainReport);
 router.post('/voice-command', authenticate, aiController.processVoiceCommand);
+router.post('/chat', authenticate, aiController.chatMessage);
 
 module.exports = router;

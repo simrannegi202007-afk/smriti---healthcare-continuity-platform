@@ -68,3 +68,5 @@ app.listen(PORT, () => {
   console.log(`🌿 Smriti backend running on http://localhost:${PORT}`);
   console.log(`📄 Health check available at http://localhost:${PORT}/api/health`);
 });
+
+

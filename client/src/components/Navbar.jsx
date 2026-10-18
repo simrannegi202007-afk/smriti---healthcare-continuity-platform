@@ -20,7 +20,8 @@ import {
   User, 
   TrendingUp,
   ChevronDown, 
-  LogIn 
+  LogIn,
+  Bot
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -28,6 +29,7 @@ export default function Navbar({
   onOpenVoice, 
   onOpenProfile, 
   onOpenAuth,
+  onOpenChatbot,
   activeTab, 
   setActiveTab 
 }) {
@@ -94,6 +96,9 @@ export default function Navbar({
     { id: 'share', label: t('nav.share'), icon: Share2 },
     { id: 'access-log', label: t('nav.accessLog'), icon: ShieldCheck }
   ];
+
+  // Chatbot nav action (not a tab, opens modal)
+  const chatbotNavItem = { label: t('chatbot.navLink'), icon: Bot, action: onOpenChatbot };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm w-full max-w-full">
@@ -164,6 +169,16 @@ export default function Navbar({
                 </button>
               );
             })}
+            {/* Chatbot nav link */}
+            <button
+              onClick={onOpenChatbot}
+              aria-label={chatbotNavItem.label}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 border border-emerald-200"
+            >
+              <Bot className="w-4 h-4 flex-shrink-0 text-emerald-500" />
+              <span className="whitespace-nowrap">{chatbotNavItem.label}</span>
+              <span className="text-[9px] bg-amber-400 text-amber-900 font-black px-1 rounded-full leading-tight">AI</span>
+            </button>
           </nav>
 
           {/* Controls: Mode Toggle, Font Size, Language, Profile, Emergency SOS */}
@@ -365,6 +380,15 @@ export default function Navbar({
                 </button>
               );
             })}
+            {/* Chatbot in mobile drawer */}
+            <button
+              onClick={() => { onOpenChatbot(); setMobileMenuOpen(false); }}
+              className="flex items-center space-x-2 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100"
+            >
+              <Bot className="w-4 h-4 text-emerald-500" />
+              <span className="truncate">{t('chatbot.navLink')}</span>
+              <span className="text-[9px] bg-amber-400 text-amber-900 font-black px-1 rounded-full leading-tight">AI</span>
+            </button>
           </div>
 
           {/* Mobile Drawer Settings: Font Size and Mode */}
